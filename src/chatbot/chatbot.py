@@ -6,8 +6,8 @@ from typing import Any
 from openai import OpenAI
 
 from .config import Settings
-from .mock.rag import Chunk, NullRetriever, Retriever
 from .prompt import ToolSignature, render_system_prompt
+from .types import Chunk, NullRetriever, Retriever
 
 
 class Chatbot:
@@ -18,12 +18,14 @@ class Chatbot:
         retriever: Retriever | None = None,
         context: str = "",
         top_k: int = 5,
+        grounding_threshold: float = 0.7,
     ) -> None:
         self.settings = settings or Settings.from_env()
         self.tool_signatures: list[Any] = list(tool_signatures or [])
         self.retriever: Retriever = retriever or NullRetriever()
         self.context = context
         self.top_k = top_k
+        self.grounding_threshold = grounding_threshold
         self.client = OpenAI(
             api_key=self.settings.api_key,
             base_url=self.settings.base_url,
@@ -35,13 +37,22 @@ class Chatbot:
         self.last_retrieved = self.retriever.retrieve(query, k=self.top_k)
         return self.last_retrieved
 
-    def system_prompt(self, query: str, react: bool = False, max_steps: int = 6) -> str:
+    def system_prompt(
+        self,
+        query: str,
+        react: bool = False,
+        max_steps: int = 6,
+        prefetch: bool = True,
+    ) -> str:
+        """`prefetch=False` bỏ hẳn lượt retrieve ở đây — dành cho agent có tool
+        tự truy vấn, tránh embedding cùng một câu hỏi hai lần."""
         return render_system_prompt(
             tool_signatures=self.tool_signatures,
-            retrieved=self.retrieve(query),
+            retrieved=self.retrieve(query) if prefetch else [],
             context=self.context,
             react=react,
             max_steps=max_steps,
+            threshold=self.grounding_threshold,
         )
 
     def _messages(self, user_message: str) -> list[dict[str, str]]:

@@ -8,8 +8,9 @@ import pytest
 
 from src.chatbot.chatbot import Chatbot
 from src.chatbot.config import Settings
-from src.chatbot.mock.rag import Chunk, InMemoryRetriever, NullRetriever
-from src.chatbot.mock.tools import ToolRegistry, make_search_docs
+from src.chatbot.types import Chunk, NullRetriever, ToolRegistry
+
+from fakes import FakeRetriever, make_fake_search_tool
 
 
 class ScriptedLLM:
@@ -54,17 +55,17 @@ def docs() -> list[Chunk]:
 
 
 @pytest.fixture
-def retriever(docs: list[Chunk]) -> InMemoryRetriever:
-    return InMemoryRetriever(docs)
+def retriever(docs: list[Chunk]) -> FakeRetriever:
+    return FakeRetriever(docs)
 
 
 @pytest.fixture
-def registry(retriever: InMemoryRetriever) -> ToolRegistry:
-    return ToolRegistry([make_search_docs(retriever)])
+def registry(retriever: FakeRetriever) -> ToolRegistry:
+    return ToolRegistry([make_fake_search_tool(retriever)])
 
 
 @pytest.fixture
-def bot(settings: Settings, retriever: InMemoryRetriever) -> Chatbot:
+def bot(settings: Settings, retriever: FakeRetriever) -> Chatbot:
     """Chatbot có RAG thật (in-memory), chưa gắn ScriptedLLM."""
     return Chatbot(settings=settings, retriever=retriever)
 

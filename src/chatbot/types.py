@@ -1,10 +1,32 @@
-"""MOCK registry tool + tool dựng sẵn — dev/test only. Thay bằng src/tools khi integrate."""
+"""Contract giữa chatbot và hai tầng ngoài (RAG, tools).
+
+Đổi retriever hay tool chỉ cần thoả contract ở đây.
+"""
 
 from collections.abc import Callable
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Protocol
 
-from .rag import Retriever
+
+@dataclass(frozen=True)
+class Chunk:
+    """Một đoạn ngữ cảnh trả về từ retriever."""
+
+    text: str
+    source: str = "unknown"
+    score: float = 0.0
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+class Retriever(Protocol):
+    def retrieve(self, query: str, k: int = 5) -> list[Chunk]: ...
+
+
+class NullRetriever:
+    """Mặc định khi Chatbot không được cấp retriever — prompt tự bỏ mục Ngữ cảnh."""
+
+    def retrieve(self, query: str, k: int = 5) -> list[Chunk]:
+        return []
 
 
 @dataclass(frozen=True)
@@ -55,20 +77,3 @@ class ToolRegistry:
 
     def __len__(self) -> int:
         return len(self._tools)
-
-
-def make_search_docs(retriever: Retriever, default_k: int = 5) -> Tool:
-    """Tool cho agent tự truy vấn RAG giữa vòng ReAct."""
-
-    def search_docs(query: str, k: int = default_k) -> str:
-        chunks = retriever.retrieve(query, k=k)
-        if not chunks:
-            return "Không tìm thấy tài liệu khớp."
-        return "\n\n".join(f"[{c.source}] {c.text}" for c in chunks)
-
-    return Tool(
-        name="search_docs",
-        description="Tìm đoạn tài liệu khoá học liên quan tới truy vấn.",
-        signature="search_docs(query: str, k: int = 5) -> str",
-        func=search_docs,
-    )

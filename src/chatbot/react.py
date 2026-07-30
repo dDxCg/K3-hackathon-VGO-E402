@@ -6,8 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .chatbot import Chatbot
-from .mock.rag import Chunk
-from .mock.tools import ToolRegistry
+from .types import Chunk, ToolRegistry
 
 _ACTION_RE = re.compile(
     r"Action\s*:\s*(?P<name>[^\n]+)\s*\n\s*Action Input\s*:\s*(?P<args>.+?)\s*(?=\nThought:|\nObservation:|\Z)",
@@ -34,11 +33,11 @@ class ReActResult:
     steps: list[Step]
     stopped_early: bool = False
     retrieved: list[Chunk] = field(default_factory=list)
-    """Chunk RAG pre-retrieve, đã nằm sẵn trong system prompt trước bước ReAct đầu tiên."""
+    """Chunk agent đã thấy: đổ sẵn vào prompt (prefetch_rag=True) hoặc do tool tìm ra."""
 
 
 def _tool_name(raw: str) -> str:
-    """Model hay viết `Action: search_docs("x")`, bọc backtick hoặc bôi đậm — lấy đúng tên tool."""
+    """Model hay viết `Action: ten_tool("x")`, bọc backtick hoặc bôi đậm — lấy đúng tên tool."""
     name = raw.strip().strip("`\"'*").split("(", 1)[0]
     return name.strip().strip("`\"'*")
 
@@ -66,17 +65,25 @@ class ReActAgent:
         registry: ToolRegistry,
         chatbot: Chatbot | None = None,
         max_steps: int = 6,
+        prefetch_rag: bool = False,
     ) -> None:
         self.registry = registry
         self.bot = chatbot or Chatbot()
         self.bot.tool_signatures = registry.signatures()
         self.max_steps = max_steps
+        # Mặc định tắt: agent đã có tool tự truy vấn, đổ sẵn chunk vào prompt chỉ
+        # tốn thêm một lượt embedding và còn khiến model trả lời thẳng, bỏ qua
+        # bước trích nguồn. Bật lại khi registry không có tool tìm kiếm.
+        self.prefetch_rag = prefetch_rag
 
     def run(self, question: str) -> ReActResult:
-        # RAG chạy trước vòng lặp: chunk đổ thẳng vào system prompt.
-        # Tool search_docs chỉ để agent tự truy vấn thêm khi ngữ cảnh này chưa đủ.
-        system = self.bot.system_prompt(question, react=True, max_steps=self.max_steps)
-        retrieved = list(self.bot.last_retrieved)
+        system = self.bot.system_prompt(
+            question,
+            react=True,
+            max_steps=self.max_steps,
+            prefetch=self.prefetch_rag,
+        )
+        retrieved = list(self.bot.last_retrieved) if self.prefetch_rag else []
         scratchpad = ""
         steps: list[Step] = []
         seen: set[str] = set()
@@ -103,7 +110,7 @@ class ReActAgent:
                 steps.append(step)
                 answer = final.group("answer").strip()
                 self.bot._remember(question, answer)
-                return ReActResult(answer=answer, steps=steps, retrieved=retrieved)
+                return ReActResult(answer=answer, steps=steps, retrieved=self._seen_chunks(retrieved))
 
             action = _ACTION_RE.search(raw)
             if not action:
@@ -111,7 +118,7 @@ class ReActAgent:
                 steps.append(step)
                 answer = raw.strip()
                 self.bot._remember(question, answer)
-                return ReActResult(answer=answer, steps=steps, retrieved=retrieved)
+                return ReActResult(answer=answer, steps=steps, retrieved=self._seen_chunks(retrieved))
 
             step.action = _tool_name(action.group("name"))
             try:
@@ -146,8 +153,21 @@ class ReActAgent:
         answer = final.group("answer").strip() if final else raw.strip()
         self.bot._remember(question, answer)
         return ReActResult(
-            answer=answer, steps=steps, stopped_early=True, retrieved=retrieved
+            answer=answer,
+            steps=steps,
+            stopped_early=True,
+            retrieved=self._seen_chunks(retrieved),
         )
+
+    def _seen_chunks(self, prefetched: list[Chunk]) -> list[Chunk]:
+        """Chunk agent thực sự nhìn thấy: đổ sẵn từ prompt, hoặc do tool tìm ra.
+
+        Khi tắt prefetch, chunk chỉ đến qua tool tìm kiếm (nếu registry có), nên
+        phải lấy từ retriever — nếu không, báo cáo và eval tưởng RAG rỗng.
+        """
+        if prefetched:
+            return prefetched
+        return list(getattr(self.bot.retriever, "last_chunks", []))
 
     def reset(self) -> None:
         self.bot.reset()

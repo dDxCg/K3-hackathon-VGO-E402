@@ -3,7 +3,7 @@
 from types import SimpleNamespace
 
 from src.chatbot.chatbot import Chatbot
-from src.chatbot.mock.rag import NullRetriever
+from src.chatbot.types import NullRetriever
 
 
 def test_chat_ghi_history(bot: Chatbot, script):
