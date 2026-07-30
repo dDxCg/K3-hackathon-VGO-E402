@@ -102,7 +102,7 @@ class ReActAgent:
                 step.observation = "<final>"
                 steps.append(step)
                 answer = final.group("answer").strip()
-                self.bot._remember(question, answer)
+                self.bot.remember(question, answer)
                 return ReActResult(answer=answer, steps=steps, retrieved=retrieved)
 
             action = _ACTION_RE.search(raw)
@@ -110,7 +110,7 @@ class ReActAgent:
                 # Không Action, không Final Answer -> coi cả output là câu trả lời.
                 steps.append(step)
                 answer = raw.strip()
-                self.bot._remember(question, answer)
+                self.bot.remember(question, answer)
                 return ReActResult(answer=answer, steps=steps, retrieved=retrieved)
 
             step.action = _tool_name(action.group("name"))
@@ -144,7 +144,7 @@ class ReActAgent:
         raw = self.bot.complete(messages)
         final = _FINAL_RE.search(raw)
         answer = final.group("answer").strip() if final else raw.strip()
-        self.bot._remember(question, answer)
+        self.bot.remember(question, answer)
         return ReActResult(
             answer=answer, steps=steps, stopped_early=True, retrieved=retrieved
         )

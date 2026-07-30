@@ -71,3 +71,16 @@ def test_attach_source_link_unknown_url_falls_back_to_url_as_label():
         [ChunkRef("x_1", "official_web", "https://example.com/unknown-page")]
     )
     assert attachment["label_hien_thi"] == "https://example.com/unknown-page"
+
+
+def test_attach_source_link_normalizes_trailing_slash_for_known_label():
+    [attachment] = attach_source_link(
+        [
+            ChunkRef(
+                "fb_old",
+                "community_facebook",
+                "https://www.facebook.com/groups/2125430681651241/",
+            )
+        ]
+    )
+    assert "không phải nguồn chính thức" in attachment["label_hien_thi"]

@@ -42,6 +42,31 @@ VGO-K3-AI-Product-Hackathon/
 └── tham-khao/                     ← JTBD Playbook + worksheet
 ```
 
+## Chạy web demo
+
+Web demo dùng `prototype.html` làm giao diện; `src/app.py` phục vụ trang và endpoint
+`POST /api/chat`. Mỗi câu hỏi đi qua RAG thật trong `src/rag`, chatbot trong
+`src/chatbot`, rồi đính nguồn hoặc chuyển kênh tuyển sinh bằng `src/tools`.
+
+```powershell
+python -m src.app
+```
+
+Mở `http://127.0.0.1:8000`. Kiểm tra server:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/health
+```
+
+Yêu cầu: `.env` có `EMBEDDING_API`, `EMBEDDING_MODEL`, `OPENAI_API`,
+`OPENAI_MODEL`; ChromaDB đã có dữ liệu tại `src/rag/chroma_db`.
+
+Chạy test offline:
+
+```powershell
+python -m pytest -q
+```
+
 ## Lịch — 6 mốc
 
 | Mốc | Khoá 3 | Khoá 4 |

@@ -27,6 +27,8 @@ class Chatbot:
         self.client = OpenAI(
             api_key=self.settings.api_key,
             base_url=self.settings.base_url,
+            timeout=self.settings.timeout_seconds,
+            max_retries=self.settings.max_retries,
         )
         self.history: list[dict[str, str]] = []
         self.last_retrieved: list[Chunk] = []
@@ -68,7 +70,24 @@ class Chatbot:
 
     def chat(self, user_message: str) -> str:
         reply = self.complete(self._messages(user_message))
-        self._remember(user_message, reply)
+        self.remember(user_message, reply)
+        return reply
+
+    def chat_with_retrieved(self, user_message: str, retrieved: Sequence[Chunk]) -> str:
+        """Trả lời bằng kết quả đã retrieve, tránh gọi embedding lần hai."""
+        self.last_retrieved = list(retrieved)
+        system = render_system_prompt(
+            tool_signatures=self.tool_signatures,
+            retrieved=self.last_retrieved,
+            context=self.context,
+        )
+        messages = [
+            {"role": "system", "content": system},
+            *self.history,
+            {"role": "user", "content": user_message},
+        ]
+        reply = self.complete(messages)
+        self.remember(user_message, reply)
         return reply
 
     def stream(self, user_message: str) -> Iterator[str]:
@@ -85,13 +104,17 @@ class Chatbot:
             if delta:
                 chunks.append(delta)
                 yield delta
-        self._remember(user_message, "".join(chunks))
+        self.remember(user_message, "".join(chunks))
 
-    def _remember(self, user_message: str, reply: str) -> None:
+    def remember(self, user_message: str, reply: str) -> None:
         self.history += [
             {"role": "user", "content": user_message},
             {"role": "assistant", "content": reply},
         ]
+
+    def _remember(self, user_message: str, reply: str) -> None:
+        """Tương thích ngược; code mới dùng API công khai ``remember``."""
+        self.remember(user_message, reply)
 
     def reset(self) -> None:
         self.history.clear()

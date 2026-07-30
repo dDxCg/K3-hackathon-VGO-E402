@@ -20,7 +20,10 @@ from typing import Any, Sequence
 
 import requests
 
-import embedding
+try:
+    from . import embedding
+except ImportError:  # Cho phép chạy trực tiếp: python src/rag/retrieval.py
+    import embedding  # type: ignore[no-redef]
 
 
 RAG_DIR = Path(__file__).resolve().parent
@@ -151,6 +154,8 @@ def retrieve(
     env_file: Path = DEFAULT_ENV_FILE,
     chroma_dir: Path | None = None,
     collection_name: str | None = None,
+    timeout_seconds: float | None = None,
+    max_retries: int | None = None,
 ) -> dict[str, Any]:
     """Embedding câu hỏi và lấy top_k chunks theo cosine similarity."""
 
@@ -162,6 +167,14 @@ def retrieve(
 
     embedding.load_env_file(env_file)
     config = embedding.load_config(env_file)
+    if timeout_seconds is not None:
+        if timeout_seconds <= 0:
+            raise RetrievalError("timeout_seconds phải lớn hơn 0")
+        config = replace(config, timeout_seconds=timeout_seconds)
+    if max_retries is not None:
+        if max_retries < 1:
+            raise RetrievalError("max_retries phải lớn hơn 0")
+        config = replace(config, max_retries=max_retries)
     resolved_chroma_dir = embedding.resolve_project_path(
         chroma_dir or os.getenv("CHROMA_DIR", ""),
         DEFAULT_CHROMA_DIR,

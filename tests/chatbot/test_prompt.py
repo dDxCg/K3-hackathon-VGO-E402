@@ -47,7 +47,7 @@ def test_chunk_rag_do_vao_prompt_kem_source_va_score():
     assert "[rubric.md]" in out
     assert "CP3 luc 16:00 ngay 1." in out
     assert "score=0.500" in out
-    assert "Trích nguồn" in out  # nguyên tắc trích nguồn chỉ bật khi có chunk
+    assert "Không chèn `[source]`" in out  # source được trả riêng trong JSON
 
 
 def test_score_bang_khong_thi_khong_in_score():
