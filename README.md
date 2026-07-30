@@ -5,6 +5,15 @@
 - Thời lượng: **1,5 ngày** (một ngày build + một buổi demo)
 - Nhóm: **4-5 người** · zone tối đa 5 nhóm · thi theo lớp
 
+## Thành viên
+
+| Họ và tên | Mã sinh viên |
+|---|---|
+| Lương Thanh Trang | 2A202601363 |
+| Nguyễn Thanh Hoàn | 2A202601201 |
+| Đỗ Đức Cường | 2A202601455 |
+| Đỗ Tuấn Kiệt | 2A202601335 |
+
 ## Bắt đầu từ đâu?
 
 1. Đọc **`01-de-bai.md`** để chọn hướng và hiểu tiêu chí.
