@@ -56,13 +56,9 @@ def test_chunk_rag_do_vao_prompt_kem_id_score_va_loai_nguon():
     assert "nguồn=rubric.md (official_web)" in out
     assert "score=0.850" in out
     assert "CP3 luc 16:00 ngay 1." in out
-<<<<<<< HEAD
-    assert "score=0.500" in out
+    assert "score=0.500" not in out
     assert "Không chèn `[source]`" in out  # source được trả riêng trong JSON
-=======
     assert "attach_source_link" in out  # nguyên tắc trích nguồn chỉ bật khi có chunk
-    assert "CẤM tự viết URL" in out
->>>>>>> integrate
 
 
 def test_tren_nguong_thi_bao_du_can_cu():

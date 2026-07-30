@@ -5,14 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
-import os
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
 from src.demo_service import DemoService, reply_dict
-from src.rag.local_embedding import LocalEmbeddingError, warmup_local_model
+from src.rag.embedding import warmup_local_model
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -110,14 +109,9 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
-    if os.getenv("EMBEDDING_QUERY_BACKEND", "local").strip().lower() == "local":
-        try:
-            print("Đang nạp multilingual-e5-large từ máy local...", flush=True)
-            warmup_local_model()
-            print("Đã nạp local embedding model.", flush=True)
-        except LocalEmbeddingError as exc:
-            print(f"Cảnh báo: {exc}", flush=True)
-            print("Web demo vẫn chạy với lexical fallback.", flush=True)
+    print("Đang nạp multilingual-e5-large từ máy local...", flush=True)
+    warmup_local_model()
+    print("Đã nạp local embedding model.", flush=True)
     server = make_server(args.host, args.port)
     print(f"Demo: http://{args.host}:{server.server_port}")
     try:

@@ -50,6 +50,8 @@ def test_http_health_page_chat_and_reset():
         assert status == 200
         assert "text/html" in headers["Content-Type"]
         assert b"/api/chat" in body
+        assert b"/api/reset" in body
+        assert b"../ui-vinuni" not in body
 
         status, body, _ = _request(
             base, "/api/chat", {"session_id": "demo", "message": "Xin chào"}

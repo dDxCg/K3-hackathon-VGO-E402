@@ -1,7 +1,7 @@
 """E2E: câu hỏi thật -> ChromaDB -> 2 tool tuyển sinh -> model -> câu trả lời.
 
 Chạy: `uv run pytest -m e2e`
-Cần: `.env` có OPENAI_API + EMBEDDING_API, và ChromaDB đã embedding
+Cần: `.env` có OPENAI_API, E5-large local, và ChromaDB đã embedding
 (`python src/rag/embedding.py`).
 
 Golden set bám đúng luồng chốt ở docs/design-agent-tools.md §1:
@@ -15,7 +15,6 @@ import pytest
 pytestmark = [
     pytest.mark.e2e,
     pytest.mark.skipif(not os.getenv("OPENAI_API"), reason="thiếu OPENAI_API trong .env"),
-    pytest.mark.skipif(not os.getenv("EMBEDDING_API"), reason="thiếu EMBEDDING_API trong .env"),
 ]
 
 # Chuỗi mốc của system prompt — nếu lọt vào câu trả lời là rò prompt.

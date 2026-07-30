@@ -2,7 +2,7 @@
 
     uv run python -m src.chatbot [--trace] [--max-steps N] [--top-k K]
 
-Cần: `.env` có OPENAI_API + EMBEDDING_API, và ChromaDB đã embedding
+Cần: `.env` có OPENAI_API, model E5-large local, và ChromaDB đã embedding
 (`python src/rag/embedding.py`).
 """
 
@@ -73,7 +73,7 @@ def main() -> None:
         if user == "stats":
             retriever = agent.bot.retriever
             print(
-                f"Embedding: {retriever.cache_misses} lượt gọi API, "
+                f"Embedding local: {retriever.cache_misses} lượt encode, "
                 f"{retriever.cache_hits} lượt dùng cache.\n"
             )
             continue
@@ -84,8 +84,8 @@ def main() -> None:
         except Exception as exc:  # lỗi mạng/ChromaDB không được làm chết phiên chat
             print(f"Lỗi: {type(exc).__name__}: {exc}")
             print(
-                "Kiểm tra: ChromaDB đã embedding chưa (`python src/rag/embedding.py`), "
-                "và EMBEDDING_TIMEOUT_SECONDS trong .env có đủ lớn không.\n"
+                "Kiểm tra: model local đã tải chưa (`python -m src.rag.download_model`) "
+                "và ChromaDB đã build chưa (`python src/rag/embedding.py`).\n"
             )
             continue
         elapsed = time.perf_counter() - started

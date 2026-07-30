@@ -9,8 +9,8 @@ from typing import Callable
 
 from src.chatbot.chatbot import Chatbot
 from src.chatbot.config import Settings
-from src.chatbot.mock.rag import Chunk, Retriever
-from src.rag.retriever import ChromaRetriever
+from src.chatbot.rag_bridge import ChromaRetriever
+from src.chatbot.types import Chunk, Retriever
 from src.tools.attach_source_link import ChunkRef, attach_source_link
 from src.tools.contact_support import NO_GROUNDING_THRESHOLD, contact_support
 

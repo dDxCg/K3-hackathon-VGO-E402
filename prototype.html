@@ -955,14 +955,14 @@ body{
 /* Self-contained campus banner: the archived image files are URL pointer text, not image binaries. */
 .post-banner{
   position:relative;isolation:isolate;width:100%;height:clamp(440px,48.6vw,700px);padding:0;overflow:hidden;
-  background:#3d7295 url("../ui-vinuni/wp-content/themes/assets/images/vinuni_banner.webp") center center/cover no-repeat;
+  background:linear-gradient(180deg,#69b6e5 0%,#bde5f5 48%,#7bad86 49%,#315d47 100%);
 }
 .post-banner::before{
   content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
   background:linear-gradient(180deg,rgba(0,20,42,.5) 0%,rgba(0,30,57,.18) 48%,rgba(0,23,46,.48) 100%);
 }
 .post-banner::after{display:none}
-.post-banner-sky,.post-banner-campus{display:none}
+.post-banner-sky,.post-banner-campus{display:block}
 .post-banner-sky{position:absolute;inset:0;z-index:0}
 .post-banner-sky::before,.post-banner-sky::after{
   content:"";position:absolute;border-radius:50%;filter:blur(18px);background:rgba(255,255,255,.34)
@@ -1081,7 +1081,9 @@ main a:visited{color:#c72127}
 /* Footer banner and patterned institutional footer */
 .footer-banner{
   position:relative;height:220px;overflow:hidden;
-  background:#315d7e url("../ui-vinuni/wp-content/themes/assets/images/vinuni_banner.webp") center 68%/cover no-repeat;
+  background:
+    linear-gradient(180deg,rgba(16,64,100,.08),rgba(7,34,63,.64)),
+    linear-gradient(165deg,#68add4 0 48%,#789d74 49% 57%,#244f3f 58% 100%);
 }
 .footer-banner::before{display:none}
 .footer-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,34,63,.16),rgba(7,34,63,.44))}
@@ -1089,8 +1091,12 @@ main a:visited{color:#c72127}
 .site-footer{
   position:relative;overflow:hidden;
   background-color:#0e3e72;
-  background-image:linear-gradient(rgba(7,45,87,.3),rgba(7,45,87,.3)),url("../ui-vinuni/wp-content/themes/assets/images/footer_mb_cropped.webp");
-  background-position:center,center bottom;background-size:cover,cover;background-repeat:no-repeat;
+  background-image:
+    linear-gradient(135deg,rgba(255,255,255,.035) 25%,transparent 25%),
+    linear-gradient(225deg,rgba(255,255,255,.035) 25%,transparent 25%),
+    linear-gradient(180deg,#0e477f,#082d57);
+  background-position:0 0,24px 0,0 0;background-size:48px 48px,48px 48px,cover;
+  background-repeat:repeat,repeat,no-repeat;
   color:#fff;border:0;font-size:12px;
 }
 .site-footer::before{
@@ -1417,10 +1423,29 @@ main a:visited{color:#c72127}
   <!-- ---------- HÌNH MINH HỌA ---------- -->
   <figure class="figure">
     <div class="frame">
-      <img class="program-campaign-image"
-           src="../ui-vinuni/wp-content/upload-2026/622514644_1324492253057030_4972566718972446318_n-600x600.webp"
-           width="600" height="600" loading="lazy" decoding="async"
-           alt="Vingroup tuyển sinh Chương trình Đào tạo AI Thực chiến">
+      <svg class="program-campaign-image" viewBox="0 0 600 600" role="img"
+           aria-label="Vingroup tuyển sinh Chương trình Đào tạo AI Thực chiến">
+        <defs>
+          <linearGradient id="campaignBg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#071a31"/><stop offset="1" stop-color="#134d8b"/>
+          </linearGradient>
+          <radialGradient id="campaignGlow"><stop stop-color="#70d8ff" stop-opacity=".75"/><stop offset="1" stop-color="#70d8ff" stop-opacity="0"/></radialGradient>
+        </defs>
+        <rect width="600" height="600" fill="url(#campaignBg)"/>
+        <circle cx="485" cy="105" r="175" fill="url(#campaignGlow)"/>
+        <g fill="none" stroke="#53c8ee" stroke-width="2" opacity=".55">
+          <path d="M360 80l68 38 72-26 55 58-32 74 42 66-62 46-4 79-81 9-53 61-68-38-72 26-55-58 32-74-42-66 62-46 4-79 81-9z"/>
+          <circle cx="360" cy="280" r="132"/><circle cx="360" cy="280" r="84"/>
+        </g>
+        <g fill="#fff">
+          <text x="54" y="92" font-family="Arial,sans-serif" font-size="25" font-weight="700">VINUNIVERSITY</text>
+          <text x="54" y="188" font-family="Arial,sans-serif" font-size="54" font-weight="800">AI THỰC CHIẾN</text>
+          <text x="54" y="234" font-family="Arial,sans-serif" font-size="25" font-weight="600">Học từ dữ liệu thật · Xây sản phẩm thật</text>
+          <text x="54" y="470" font-family="Arial,sans-serif" font-size="22">Trợ lý tuyển sinh RAG</text>
+          <text x="54" y="505" font-family="Arial,sans-serif" font-size="17" opacity=".8">Local multilingual-e5-large</text>
+        </g>
+        <rect x="54" y="536" width="200" height="6" rx="3" fill="#c72127"/>
+      </svg>
     </div>
     <figcaption>Thông tin tuyển sinh Chương trình Đào tạo Nhân tài AI Thực chiến.</figcaption>
   </figure>
@@ -1637,7 +1662,16 @@ main a:visited{color:#c72127}
 <div class="vc-root">
   <button class="vc-fab is-pulsing" id="vcFab" type="button"
           aria-label="Mở trợ lý tuyển sinh" aria-expanded="false" aria-controls="vcPanel">
-    <img class="vc-fab-mascot" src="../ui-vinuni/wp-content/themes/assets/images/mascot.svg" alt="" aria-hidden="true">
+    <svg class="vc-fab-mascot" viewBox="0 0 96 96" aria-hidden="true">
+      <defs><linearGradient id="botBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2b7ec3"/><stop offset="1" stop-color="#0b3969"/></linearGradient></defs>
+      <path d="M28 25c3-13 37-17 43 0l8 11v38c-8 15-55 15-63 0V36z" fill="url(#botBody)" stroke="#fff" stroke-width="3"/>
+      <rect x="23" y="31" width="50" height="35" rx="15" fill="#fff"/>
+      <circle cx="38" cy="47" r="5" fill="#134d8b"/><circle cx="58" cy="47" r="5" fill="#134d8b"/>
+      <path d="M38 57q10 8 20 0" fill="none" stroke="#c72127" stroke-width="3" stroke-linecap="round"/>
+      <path d="M48 20V11m-5 0h10" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="48" cy="10" r="4" fill="#c72127"/>
+      <path d="M15 47l-8 7m74-7 8 7" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+    </svg>
     <svg class="vc-fab-ico ico-chat" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-5.2A8 8 0 0 1 13 4a8 8 0 0 1 8 8z"/>
       <path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>
@@ -2909,7 +2943,9 @@ function askClear(btn){
   btn.textContent = btn.dataset.orig;
   doClear();
 }
-function doClear(){
+async function doClear(){
+  const previousSessionId = Memory.sessionId;
+  if(pendingRequest) stopStreaming();
   Memory.turns = []; Memory.topics = []; Memory.lastIntent = null;
   Memory.profile = { name:null, email:null, phone:null, level:null };
   Memory.opened = true;
@@ -2918,6 +2954,16 @@ function doClear(){
   thread.innerHTML = '';
   botSay(GREETING, { intent:'greeting', label:'Chào hỏi', chips:DEFAULT_CHIPS });
   toast('Đã xóa hội thoại');
+  try{
+    const response = await fetch('/api/reset', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({session_id:previousSessionId})
+    });
+    if(!response.ok) throw new Error('Reset API returned '+response.status);
+  }catch(err){
+    console.warn('Could not reset server session:', err);
+  }
 }
 $('#vcClear').addEventListener('click', e => askClear(e.currentTarget));
 
