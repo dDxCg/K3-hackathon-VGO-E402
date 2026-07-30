@@ -64,6 +64,20 @@ def check_case(checks: dict, answer: str, tools: list[str], steps: int, stopped_
     return failures
 
 
+def classify(expect: str, passed: bool) -> str:
+    """Đối chiếu kết quả với trạng thái đã biết.
+
+    `expect="unknown"` là case mới chưa từng chạy — không có gì để so, nên gắn
+    `baseline` thay vì bịa ra regression/improvement. Sau full run đầu tiên phải
+    ghi kết quả thật vào `expect` để lần sau bắt được regression.
+    """
+    if expect not in ("pass", "fail"):
+        return "baseline"
+    if passed == (expect == "pass"):
+        return "as_expected"
+    return "improvement" if passed else "regression"
+
+
 def run_case(case: dict, max_steps: int) -> dict:
     agent = build_admission_agent(max_steps=max_steps)
     started = time.perf_counter()
@@ -89,11 +103,7 @@ def run_case(case: dict, max_steps: int) -> dict:
         result.stopped_early,
     )
     passed = not failures
-    expect_pass = case["expect"] == "pass"
-    if passed == expect_pass:
-        status = "as_expected"
-    else:
-        status = "improvement" if passed else "regression"
+    status = classify(case["expect"], passed)
 
     return {
         **{k: case[k] for k in ("id", "type", "category", "question", "expect")},
@@ -106,6 +116,9 @@ def run_case(case: dict, max_steps: int) -> dict:
         "stopped_early": result.stopped_early,
         "best_score": round(result.retrieved[0].score, 4) if result.retrieved else None,
         "retrieved_sources": [c.metadata.get("source_type") for c in result.retrieved],
+        # Text chunk, không chỉ source_type: eval/judge.py cần nội dung thật để chấm
+        # faithfulness. Không có nó thì chỉ chấm được trên gold context, tức đo nhầm thứ.
+        "retrieved_contexts": [c.text for c in result.retrieved],
         "answer": result.answer,
         "seconds": round(elapsed, 2),
     }
