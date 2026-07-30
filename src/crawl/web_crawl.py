@@ -15,6 +15,7 @@ sources = [
 ]
 
 OUT_DIR = Path(__file__).resolve().parents[2] / "data" / "web"
+CLEAN_DIR = OUT_DIR / "_clean"
 RAW_DIR = OUT_DIR / "_raw"
 
 USER_AGENT = (
@@ -116,7 +117,7 @@ def save(url: str, raw: str) -> None:
     cleaned = clean_markdown(raw)
     header = f"<!-- source: {url} -->\n\n"
     (RAW_DIR / f"{slug}.md").write_text(header + raw, encoding="utf-8")
-    (OUT_DIR / f"{slug}.md").write_text(header + cleaned, encoding="utf-8")
+    (CLEAN_DIR / f"{slug}.md").write_text(header + cleaned, encoding="utf-8")
     drop = 100 - round(100 * len(cleaned) / len(raw))
     print(f"saved {slug}.md raw={len(raw)} clean={len(cleaned)} (-{drop}%)")
 
@@ -124,6 +125,7 @@ def save(url: str, raw: str) -> None:
 async def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     RAW_DIR.mkdir(parents=True, exist_ok=True)
+    CLEAN_DIR.mkdir(parents=True, exist_ok=True)
 
     pdf_urls = [u for u in sources if urlparse(u).path.lower().endswith(".pdf")]
     html_urls = [u for u in sources if u not in pdf_urls]
