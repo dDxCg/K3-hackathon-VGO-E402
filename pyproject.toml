@@ -25,7 +25,8 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-m 'not live'"
+addopts = "-m 'not live and not e2e'"
 markers = [
     "live: gọi model thật qua OpenRouter, cần OPENAI_API. Chạy bằng `pytest -m live`.",
+    "e2e: chạy hết stack thật (ChromaDB + embedding API + model). Chạy bằng `pytest -m e2e`.",
 ]

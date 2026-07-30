@@ -1,6 +1,6 @@
 """Render system prompt — các khối điều kiện trong system.j2."""
 
-from src.chatbot.mock.rag import Chunk
+from src.chatbot.types import Chunk
 from src.chatbot.prompt import ToolSignature, render_system_prompt
 
 TOOL = ToolSignature(
@@ -40,19 +40,47 @@ def test_khong_co_chunk_thi_bo_muc_ngu_canh():
     assert "Ngữ cảnh truy xuất" not in out
 
 
-def test_chunk_rag_do_vao_prompt_kem_source_va_score():
-    chunks = [Chunk("CP3 luc 16:00 ngay 1.", "rubric.md", score=0.5)]
+def test_chunk_rag_do_vao_prompt_kem_id_score_va_loai_nguon():
+    """Model cần `id` trong prompt mới truyền được cho attach_source_link."""
+    chunks = [
+        Chunk(
+            "CP3 luc 16:00 ngay 1.",
+            "rubric.md",
+            score=0.85,
+            metadata={"chunk_id": "chunk_abc", "source_type": "official_web"},
+        )
+    ]
     out = render_system_prompt(retrieved=chunks)
-    assert "Ngữ cảnh truy xuất" in out
-    assert "[rubric.md]" in out
+    assert "## Ngữ cảnh truy xuất" in out
+    assert "id=chunk_abc" in out
+    assert "nguồn=rubric.md (official_web)" in out
+    assert "score=0.850" in out
     assert "CP3 luc 16:00 ngay 1." in out
+<<<<<<< HEAD
     assert "score=0.500" in out
     assert "Không chèn `[source]`" in out  # source được trả riêng trong JSON
+=======
+    assert "attach_source_link" in out  # nguyên tắc trích nguồn chỉ bật khi có chunk
+    assert "CẤM tự viết URL" in out
+>>>>>>> integrate
 
 
-def test_score_bang_khong_thi_khong_in_score():
-    out = render_system_prompt(retrieved=[Chunk("x", "a.md", score=0.0)])
-    assert "score=" not in out
+def test_tren_nguong_thi_bao_du_can_cu():
+    out = render_system_prompt(retrieved=[Chunk("x", "a.md", score=0.85)], threshold=0.7)
+    assert "Đủ căn cứ" in out
+    assert "KHÔNG đủ căn cứ" not in out
+
+
+def test_duoi_nguong_thi_bao_goi_contact_support():
+    out = render_system_prompt(retrieved=[Chunk("x", "a.md", score=0.42)], threshold=0.7)
+    assert "KHÔNG đủ căn cứ" in out
+    assert "0.420" in out and "0.70" in out
+    assert "no_grounding" in out
+
+
+def test_ket_luan_lay_theo_chunk_diem_cao_nhat():
+    chunks = [Chunk("a", "a.md", score=0.4), Chunk("b", "b.md", score=0.9)]
+    assert "Đủ căn cứ" in render_system_prompt(retrieved=chunks, threshold=0.7)
 
 
 def test_context_bo_sung():

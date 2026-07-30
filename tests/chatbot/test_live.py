@@ -9,8 +9,9 @@ import pytest
 
 from src.chatbot.chatbot import Chatbot
 from src.chatbot.config import Settings
-from src.chatbot.mock.rag import Chunk, InMemoryRetriever
-from src.chatbot.mock.tools import ToolRegistry, make_search_docs
+from src.chatbot.types import Chunk, ToolRegistry
+
+from fakes import FakeRetriever, make_fake_search_tool
 from src.chatbot.react import ReActAgent
 
 pytestmark = [
@@ -24,8 +25,8 @@ SECRET = Chunk("Ma xac minh cua nhom K3 la ZX-7741, doc tai buoi demo.", "noi-bo
 
 @pytest.fixture
 def live_agent() -> ReActAgent:
-    retriever = InMemoryRetriever([SECRET])
-    registry = ToolRegistry([make_search_docs(retriever)])
+    retriever = FakeRetriever([SECRET])
+    registry = ToolRegistry([make_fake_search_tool(retriever)])
     bot = Chatbot(settings=Settings.from_env(), retriever=retriever)
     return ReActAgent(registry, chatbot=bot, max_steps=4)
 
