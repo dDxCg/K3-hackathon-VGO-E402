@@ -1,6 +1,6 @@
 # Báo cáo đánh giá hệ thống
 
-Ngày chạy: 2026-07-30  
+Ngày chạy gần nhất: 2026-07-31
 Môi trường: Windows, Python 3.10  
 Kết luận: **PASS — toàn bộ test offline và RAG local hoạt động ổn định.**
 
@@ -16,10 +16,10 @@ Kết quả:
 
 | Chỉ số | Giá trị |
 | --- | ---: |
-| Passed | 110 |
+| Passed | 113 |
 | Failed | 0 |
 | Deselected | 11 |
-| Thời gian | 4,07 giây |
+| Thời gian | 4,65 giây |
 
 `11 deselected` thuộc marker `live` và `e2e`, bị loại theo cấu hình mặc định vì gọi chat API thật. Đây không phải test lỗi.
 
@@ -27,10 +27,18 @@ Test chậm nhất:
 
 | Test | Thời gian |
 | --- | ---: |
-| `test_http_health_page_chat_and_reset` | 0,91 giây |
-| `test_http_rejects_empty_message` | 0,51 giây |
+| `test_http_health_page_chat_and_reset` | 0,68 giây |
+| `test_http_rejects_empty_message` | 0,52 giây |
+| `test_ui_path_and_static_route_are_confined_to_ui_folder` | 0,51 giây |
 
-Các nhóm đã kiểm tra gồm chatbot, ReAct loop, prompt, RAG bridge, tool registry, source attachment, contact support, demo service và HTTP API.
+Các nhóm đã kiểm tra gồm chatbot, ReAct loop, prompt, RAG bridge, tool registry,
+source attachment, contact support, demo service, HTTP API và static asset của UI
+(banner WebP, ảnh chương trình, footer, mascot SVG và MIME type tương ứng).
+
+UI có thêm kiểm thử hồi quy cho luồng streaming: phần nội dung đang gõ được render
+dưới dạng text an toàn; dòng bảng Markdown chưa hoàn chỉnh luôn được tiêu thụ để
+không thể khóa main thread. Luồng browser với câu hỏi tuyển sinh kết thúc bình
+thường, nút `Dừng tạo` được ẩn và không còn cursor sau khi hoàn tất.
 
 ## 2. Kiểm tra RAG local
 
@@ -94,6 +102,35 @@ python -m compileall -q src eval
 | Tool `contact_support` | PASS |
 | ReAct orchestration | PASS |
 | Demo HTTP API | PASS |
-| Chat provider thật | Chưa chạy trong lượt này |
+| Chat provider thật | PASS — browser smoke 1 câu hỏi lõi |
+
+## 5. Browser smoke end-to-end
+
+Luồng chạy thật ngày 2026-07-31:
+
+```text
+ui/prototype.html → POST /api/chat → E5-large local → ChromaDB
+→ model chat đã cấu hình → source attachment → UI
+```
+
+| Kiểm tra | Kết quả |
+| --- | --- |
+| Câu hỏi | `Chương trình học trong bao lâu?` |
+| Đáp án | `Chương trình học kéo dài 12 tuần.` |
+| Nguồn hiển thị | `20K AI Handbook — VinUni` |
+| URL nguồn | PDF chính thức VinUni |
+| Reset hội thoại | PASS — còn 0 user message, 1 greeting, 0 source cũ |
+| Mobile | PASS — panel đúng viewport 390 × 844, composer nằm trong viewport |
+
+Lần chạy đầu phát hiện nguồn Facebook được hiện như URL trần dù có nguồn
+chính thức gần tương đương. Hệ thống đã được sửa để:
+
+1. Ưu tiên nguồn chính thức khi similarity cách top không quá `0.03`.
+2. Giữ `source_type`, nhãn và cảnh báo ở backend để trace/test.
+3. Theo quyết định UI mới, chỉ hiện `Nguồn tham khảo` + URL ở cuối bubble,
+   sau khi câu trả lời stream xong; không hiện metadata cho người dùng.
+
+Hai unit test hồi quy mới bảo vệ việc ưu tiên nguồn chính thức và giữ cảnh báo
+cho nguồn cộng đồng.
 
 Hệ thống đủ điều kiện chạy demo offline ở tầng RAG. Muốn xác nhận model chat/provider thật, chạy riêng `pytest -m live` hoặc `pytest -m e2e`; các lệnh này cần `OPENAI_API` và có thể phát sinh chi phí/network.

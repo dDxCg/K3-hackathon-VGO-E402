@@ -1,4 +1,4 @@
-"""HTTP server tối giản phục vụ ``prototype.html`` và API chat thật."""
+"""HTTP server tối giản phục vụ UI trong ``ui/`` và API chat thật."""
 
 from __future__ import annotations
 
@@ -8,15 +8,20 @@ import mimetypes
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from src.demo_service import DemoService, reply_dict
 from src.rag.embedding import warmup_local_model
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROTOTYPE = PROJECT_ROOT / "prototype.html"
+UI_ROOT = PROJECT_ROOT / "ui"
+PROTOTYPE = UI_ROOT / "prototype.html"
 MAX_BODY_BYTES = 64 * 1024
+CONTENT_TYPES = {
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+}
 
 
 class DemoHandler(BaseHTTPRequestHandler):
@@ -33,21 +38,42 @@ class DemoHandler(BaseHTTPRequestHandler):
 
     def _file(self, path: Path) -> None:
         body = path.read_bytes()
-        content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        content_type = CONTENT_TYPES.get(path.suffix.lower())
+        if content_type is None:
+            content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        content_type_header = content_type
+        if content_type.startswith("text/") or content_type in {
+            "application/javascript",
+            "application/json",
+            "image/svg+xml",
+        }:
+            content_type_header += "; charset=utf-8"
         self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", f"{content_type}; charset=utf-8")
+        self.send_header("Content-Type", content_type_header)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
     def do_GET(self) -> None:  # noqa: N802
-        path = urlparse(self.path).path
-        if path in {"/", "/prototype.html"}:
+        path = unquote(urlparse(self.path).path)
+        if path in {"/", "/prototype.html", "/ui/prototype.html"}:
             self._file(PROTOTYPE)
             return
         if path == "/api/health":
             self._json(HTTPStatus.OK, {"status": "ok"})
+            return
+        # Hỗ trợ cả asset từ URL gốc (`/wp-content/...`) và khi mở alias
+        # `/ui/prototype.html` (`/ui/wp-content/...`).
+        static_path = path.removeprefix("/ui/") if path.startswith("/ui/") else path.lstrip("/")
+        candidate = (UI_ROOT / static_path).resolve()
+        try:
+            candidate.relative_to(UI_ROOT.resolve())
+        except ValueError:
+            self._json(HTTPStatus.NOT_FOUND, {"error": "Không tìm thấy endpoint"})
+            return
+        if candidate.is_file():
+            self._file(candidate)
             return
         self._json(HTTPStatus.NOT_FOUND, {"error": "Không tìm thấy endpoint"})
 

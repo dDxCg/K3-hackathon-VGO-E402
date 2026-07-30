@@ -47,13 +47,14 @@ VGO-K3-AI-Product-Hackathon/
 │   ├── chatbot/                   ← tầng chatbot / orchestration
 │   ├── rag/                       ← indexing + retrieval
 │   └── tools/                     ← tool cho agent gọi
+├── ui/                            ← prototype.html và toàn bộ asset giao diện
 ├── docs/                          ← tài liệu nội bộ nhóm
 └── tham-khao/                     ← JTBD Playbook + worksheet
 ```
 
 ## Chạy web demo
 
-Web demo dùng `prototype.html` làm giao diện; `src/app.py` phục vụ trang và endpoint
+Web demo dùng `ui/prototype.html` làm giao diện; `src/app.py` phục vụ trang, asset trong `ui/` và endpoint
 `POST /api/chat`. Mỗi câu hỏi đi qua RAG thật trong `src/rag`, chatbot trong
 `src/chatbot`, rồi đính nguồn hoặc chuyển kênh tuyển sinh bằng `src/tools`.
 
@@ -61,8 +62,8 @@ Web demo dùng `prototype.html` làm giao diện; `src/app.py` phục vụ trang
 python -m src.app
 ```
 
-`prototype.html` gọi `POST /api/chat` để chat và `POST /api/reset` khi xóa hội
-thoại. CSS và SVG được nhúng trong trang, không cần thư mục asset bên ngoài.
+`ui/prototype.html` gọi `POST /api/chat` để chat và `POST /api/reset` khi xóa hội
+thoại. Asset giao diện được đặt tập trung trong `ui/` và phục vụ cùng origin.
 
 Mở `http://127.0.0.1:8000`. Kiểm tra server:
 

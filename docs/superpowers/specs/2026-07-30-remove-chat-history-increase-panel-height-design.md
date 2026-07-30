@@ -32,7 +32,7 @@ Simplify the chatbot menu by removing the dedicated question-history screen show
 
 ## Implementation boundaries
 
-All functional changes are limited to `prototype.html`. Existing unrelated edits in that file must be preserved. No session-storage behavior, transcript format, or visual styling outside the removed history interface will be changed.
+All functional changes are limited to `ui/prototype.html`. Existing unrelated edits in that file must be preserved. No session-storage behavior, transcript format, or visual styling outside the removed history interface will be changed.
 
 ## Validation
 

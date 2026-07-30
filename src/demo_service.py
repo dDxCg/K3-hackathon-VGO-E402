@@ -22,6 +22,79 @@ DEFAULT_SUGGESTIONS = [
     "Địa điểm học ở đâu?",
 ]
 
+# Nguồn chính thức được ưu tiên khi độ phù hợp gần tương đương nguồn cộng đồng.
+# Margin nhỏ giữ nguyên nguồn cộng đồng khi nó thực sự khớp tốt hơn rõ rệt.
+OFFICIAL_SOURCE_MARGIN = 0.03
+
+# Domain gate chạy trước retrieval. E5 có thể cho cosine cao với câu hoàn toàn
+# không liên quan vì toàn bộ corpus cùng một chủ đề; similarity không phải bộ
+# phân loại phạm vi.
+PROGRAM_SCOPE_TERMS = (
+    "ai thuc chien",
+    "vinuni",
+    "vingroup",
+    "chuong trinh",
+    "khoa hoc",
+    "tuyen sinh",
+    "du tuyen",
+    "dang ky",
+    "nop ho so",
+    "ho so",
+    "dieu kien",
+    "doi tuong",
+    "hoc vien",
+    "hoc phi",
+    "hoc bong",
+    "phu cap",
+    "quyen loi",
+    "lo trinh",
+    "thoi luong",
+    "lich hoc",
+    "thoi khoa bieu",
+    "dia diem hoc",
+    "hoc o dau",
+    "hoc truc tiep",
+    "hoc online",
+    "track",
+    "noi dung hoc",
+    "giang vien",
+    "mentor",
+    "du an",
+    "thuc chien",
+    "doanh nghiep",
+    "chung chi",
+    "nghe nghiep",
+    "viec lam",
+    "bai danh gia",
+    "phong van",
+    "han nop",
+    "deadline",
+    "lien he",
+    "hotline",
+    "email tuyen sinh",
+)
+
+FOLLOW_UP_PATTERNS = (
+    r"^(con|the|vay|neu).{0,80}$",
+    r"^(bao lau|khi nao|o dau|nhu the nao|cu the|chi tiet).{0,40}$",
+    r"^(co duoc|co can|co phai|co mat|co ho tro).{0,60}$",
+)
+
+UNRELATED_PATTERNS = (
+    r"^\s*\d+(?:\s*[+\-*/x:]\s*\d+)+\s*\??$",
+    r"con ga.{0,30}qua trung|qua trung.{0,30}con ga",
+    r"thu do.{0,20}(phap|duc|anh|my|nhat)",
+    r"thoi tiet|bong da|nau an|ke chuyen|tu vi|xem boi",
+)
+
+UNRELATED_REPLY = (
+    "Cảm ơn bạn đã đặt câu hỏi! Mình là trợ lý tư vấn Chương trình AI Thực Chiến "
+    "của VinUni, nên mình xin phép không trả lời các nội dung ngoài phạm vi này để "
+    "tránh cung cấp thông tin không phù hợp.\n\n"
+    "Mình có thể hỗ trợ bạn về điều kiện dự tuyển, hồ sơ, lịch học, học phí, "
+    "nội dung chương trình hoặc địa điểm học."
+)
+
 
 @dataclass(frozen=True)
 class DemoReply:
@@ -43,7 +116,11 @@ def _plain(value: str) -> str:
     )
 
 
-def classify_restricted(question: str) -> str | None:
+def classify_restricted(
+    question: str,
+    *,
+    has_program_context: bool = False,
+) -> str | None:
     """Các ranh giới Phase 1 đã chốt trong brief, kiểm tra xác định trước LLM."""
     text = _plain(question)
     personal = (
@@ -59,7 +136,27 @@ def classify_restricted(question: str) -> str | None:
         return "personal_data_request"
     if any(re.search(pattern, text) for pattern in out_of_scope):
         return "out_of_scope"
-    return None
+    if any(re.search(pattern, text) for pattern in UNRELATED_PATTERNS):
+        return "unrelated"
+    if any(term in text for term in PROGRAM_SCOPE_TERMS):
+        return None
+    if has_program_context and any(
+        re.search(pattern, text) for pattern in FOLLOW_UP_PATTERNS
+    ):
+        return None
+    return "unrelated"
+
+
+def _has_program_context(bot: Chatbot) -> bool:
+    """Chỉ cho phép câu nối ngắn khi lượt trước thực sự thuộc chủ đề chương trình."""
+
+    history = getattr(bot, "history", [])
+    for message in reversed(history[-6:]):
+        if not isinstance(message, dict) or message.get("role") != "user":
+            continue
+        text = _plain(str(message.get("content", "")))
+        return any(term in text for term in PROGRAM_SCOPE_TERMS)
+    return False
 
 
 def _contact_markdown(reason: str, question: str) -> str:
@@ -77,6 +174,23 @@ def _contact_markdown(reason: str, question: str) -> str:
 
 def _source_type(chunk: Chunk) -> str:
     return "community_facebook" if chunk.metadata.get("loai_nguon") == "facebook" else "official_web"
+
+
+def _prioritize_sources(chunks: list[Chunk]) -> list[Chunk]:
+    """Ưu tiên nguồn chính thức nếu score nằm sát kết quả tốt nhất."""
+    if not chunks:
+        return []
+    best_score = max(chunk.score for chunk in chunks)
+    return sorted(
+        chunks,
+        key=lambda chunk: (
+            0
+            if _source_type(chunk) == "official_web"
+            and best_score - chunk.score <= OFFICIAL_SOURCE_MARGIN
+            else 1,
+            -chunk.score,
+        ),
+    )
 
 
 def _attachments(chunks: list[Chunk]) -> list[dict]:
@@ -103,6 +217,9 @@ def _attachments(chunks: list[Chunk]) -> list[dict]:
             "muc_lon": str(chunk.metadata.get("muc_lon") or ""),
             "muc_nho": str(chunk.metadata.get("muc_nho") or ""),
             "source_link": attachment["source_url"],
+            "source_type": attachment["source_type"],
+            "label_hien_thi": attachment["label_hien_thi"],
+            "warning": attachment.get("warning", ""),
         }
         key = (source["muc_lon"], source["muc_nho"], source["source_link"])
         if key not in seen:
@@ -124,6 +241,18 @@ def _clean_answer(answer: str) -> str:
     answer = re.sub(r" {2,}", " ", answer)
     answer = re.sub(r"\n{3,}", "\n\n", answer)
     return answer.strip()
+
+
+def _is_refusal_answer(answer: str) -> bool:
+    """Nhận diện lời từ chối của LLM để không gắn nguồn RAG không liên quan."""
+
+    text = _plain(answer)
+    refusal_patterns = (
+        r"ngoai (chu de|pham vi)",
+        r"khong the (ho tro|tra loi).{0,100}(cau hoi|noi dung)",
+        r"chi (co the|ho tro).{0,80}(ai thuc chien|chuong trinh|tuyen sinh)",
+    )
+    return any(re.search(pattern, text) for pattern in refusal_patterns)
 
 
 class DemoService:
@@ -160,16 +289,30 @@ class DemoService:
 
         bot, lock = self._session(session_id)
         with lock:
-            restricted_reason = classify_restricted(question)
+            restricted_reason = classify_restricted(
+                question,
+                has_program_context=_has_program_context(bot),
+            )
             if restricted_reason:
+                if restricted_reason == "unrelated":
+                    bot.remember(question, UNRELATED_REPLY)
+                    return DemoReply(
+                        UNRELATED_REPLY,
+                        [],
+                        DEFAULT_SUGGESTIONS,
+                        False,
+                        None,
+                        "out_of_scope",
+                    )
                 answer = _contact_markdown(restricted_reason, question)
                 bot.remember(question, answer)
                 return DemoReply(
                     answer, [], DEFAULT_SUGGESTIONS, False, None, "contact_support"
                 )
 
-            chunks = self.retriever.retrieve(question, k=5)
-            top_score = chunks[0].score if chunks else None
+            retrieved = self.retriever.retrieve(question, k=5)
+            top_score = max((chunk.score for chunk in retrieved), default=None)
+            chunks = _prioritize_sources(retrieved)
             if not chunks or top_score is None or top_score < NO_GROUNDING_THRESHOLD:
                 answer = _contact_markdown("no_grounding", question)
                 bot.remember(question, answer)
@@ -178,8 +321,17 @@ class DemoService:
                 )
 
             answer = bot.chat_with_retrieved(question, chunks)
-            cited_chunks = _cited_chunks(answer, chunks)
             answer = _clean_answer(answer)
+            if _is_refusal_answer(answer):
+                return DemoReply(
+                    answer=answer,
+                    sources=[],
+                    suggestions=DEFAULT_SUGGESTIONS,
+                    grounded=False,
+                    top_score=top_score,
+                    path="out_of_scope",
+                )
+            cited_chunks = _cited_chunks(answer, chunks)
             return DemoReply(
                 answer=answer,
                 sources=_attachments(cited_chunks),

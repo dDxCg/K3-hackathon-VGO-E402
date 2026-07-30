@@ -526,6 +526,7 @@ main li::marker{color:var(--navy-500);font-weight:600}
    ============================================================ */
 .vc-rich>*:first-child{margin-top:0}
 .vc-rich>*:last-child{margin-bottom:0}
+.vc-rich.is-streaming{white-space:pre-wrap}
 .vc-rich p{margin:0 0 10px}
 .vc-rich h1{font-size:18px;font-weight:700;color:var(--navy-900);line-height:1.35;margin:14px 0 6px}
 .vc-rich h2{font-size:16.5px;font-weight:700;color:var(--navy-900);line-height:1.35;margin:14px 0 6px}
@@ -606,8 +607,6 @@ main li::marker{color:var(--navy-500);font-weight:600}
 .vc-source-list{display:grid;gap:8px}
 .vc-source-item{padding-top:8px;border-top:1px solid var(--border)}
 .vc-source-item:first-child{padding-top:0;border-top:0}
-.vc-source-major{font-size:12.5px;font-weight:650;color:var(--text-600);line-height:1.45}
-.vc-source-minor{font-size:12px;color:var(--text-600);line-height:1.45;margin-top:2px}
 .vc-src{
   display:inline-flex;align-items:center;gap:5px;background:var(--bg-white);
   border:1px solid var(--border);border-radius:var(--r-pill);padding:4px 10px;
@@ -952,17 +951,17 @@ body{
 .search-submit{position:absolute;right:14px;top:50%;width:24px;height:24px;transform:translateY(-50%)}
 .search-submit svg{width:24px;height:24px;fill:none;stroke:#2e2e2e;stroke-width:1.5}
 
-/* Self-contained campus banner: the archived image files are URL pointer text, not image binaries. */
+/* Campus banner loaded from the local UI asset bundle. */
 .post-banner{
   position:relative;isolation:isolate;width:100%;height:clamp(440px,48.6vw,700px);padding:0;overflow:hidden;
-  background:linear-gradient(180deg,#69b6e5 0%,#bde5f5 48%,#7bad86 49%,#315d47 100%);
+  background:#315d47 url("/wp-content/themes/assets/images/vinuni_banner.webp") center/cover no-repeat;
 }
 .post-banner::before{
   content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
   background:linear-gradient(180deg,rgba(0,20,42,.5) 0%,rgba(0,30,57,.18) 48%,rgba(0,23,46,.48) 100%);
 }
 .post-banner::after{display:none}
-.post-banner-sky,.post-banner-campus{display:block}
+.post-banner-sky,.post-banner-campus{display:none}
 .post-banner-sky{position:absolute;inset:0;z-index:0}
 .post-banner-sky::before,.post-banner-sky::after{
   content:"";position:absolute;border-radius:50%;filter:blur(18px);background:rgba(255,255,255,.34)
@@ -1083,7 +1082,7 @@ main a:visited{color:#c72127}
   position:relative;height:220px;overflow:hidden;
   background:
     linear-gradient(180deg,rgba(16,64,100,.08),rgba(7,34,63,.64)),
-    linear-gradient(165deg,#68add4 0 48%,#789d74 49% 57%,#244f3f 58% 100%);
+    url("/wp-content/themes/assets/images/vinuni_banner.webp") center 58%/cover no-repeat;
 }
 .footer-banner::before{display:none}
 .footer-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,34,63,.16),rgba(7,34,63,.44))}
@@ -1092,11 +1091,10 @@ main a:visited{color:#c72127}
   position:relative;overflow:hidden;
   background-color:#0e3e72;
   background-image:
-    linear-gradient(135deg,rgba(255,255,255,.035) 25%,transparent 25%),
-    linear-gradient(225deg,rgba(255,255,255,.035) 25%,transparent 25%),
-    linear-gradient(180deg,#0e477f,#082d57);
-  background-position:0 0,24px 0,0 0;background-size:48px 48px,48px 48px,cover;
-  background-repeat:repeat,repeat,no-repeat;
+    linear-gradient(180deg,rgba(8,45,87,.74),rgba(8,45,87,.9)),
+    url("/wp-content/themes/assets/images/footer_mb_cropped.webp");
+  background-position:center,center;background-size:cover,cover;
+  background-repeat:no-repeat,no-repeat;
   color:#fff;border:0;font-size:12px;
 }
 .site-footer::before{
@@ -1423,29 +1421,10 @@ main a:visited{color:#c72127}
   <!-- ---------- HÌNH MINH HỌA ---------- -->
   <figure class="figure">
     <div class="frame">
-      <svg class="program-campaign-image" viewBox="0 0 600 600" role="img"
-           aria-label="Vingroup tuyển sinh Chương trình Đào tạo AI Thực chiến">
-        <defs>
-          <linearGradient id="campaignBg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#071a31"/><stop offset="1" stop-color="#134d8b"/>
-          </linearGradient>
-          <radialGradient id="campaignGlow"><stop stop-color="#70d8ff" stop-opacity=".75"/><stop offset="1" stop-color="#70d8ff" stop-opacity="0"/></radialGradient>
-        </defs>
-        <rect width="600" height="600" fill="url(#campaignBg)"/>
-        <circle cx="485" cy="105" r="175" fill="url(#campaignGlow)"/>
-        <g fill="none" stroke="#53c8ee" stroke-width="2" opacity=".55">
-          <path d="M360 80l68 38 72-26 55 58-32 74 42 66-62 46-4 79-81 9-53 61-68-38-72 26-55-58 32-74-42-66 62-46 4-79 81-9z"/>
-          <circle cx="360" cy="280" r="132"/><circle cx="360" cy="280" r="84"/>
-        </g>
-        <g fill="#fff">
-          <text x="54" y="92" font-family="Arial,sans-serif" font-size="25" font-weight="700">VINUNIVERSITY</text>
-          <text x="54" y="188" font-family="Arial,sans-serif" font-size="54" font-weight="800">AI THỰC CHIẾN</text>
-          <text x="54" y="234" font-family="Arial,sans-serif" font-size="25" font-weight="600">Học từ dữ liệu thật · Xây sản phẩm thật</text>
-          <text x="54" y="470" font-family="Arial,sans-serif" font-size="22">Trợ lý tuyển sinh RAG</text>
-          <text x="54" y="505" font-family="Arial,sans-serif" font-size="17" opacity=".8">Local multilingual-e5-large</text>
-        </g>
-        <rect x="54" y="536" width="200" height="6" rx="3" fill="#c72127"/>
-      </svg>
+      <img class="program-campaign-image"
+           src="/wp-content/upload-2026/622514644_1324492253057030_4972566718972446318_n-600x600.webp"
+           alt="Vingroup tuyển sinh Chương trình Đào tạo AI Thực chiến"
+           width="600" height="600" loading="lazy">
     </div>
     <figcaption>Thông tin tuyển sinh Chương trình Đào tạo Nhân tài AI Thực chiến.</figcaption>
   </figure>
@@ -1662,16 +1641,9 @@ main a:visited{color:#c72127}
 <div class="vc-root">
   <button class="vc-fab is-pulsing" id="vcFab" type="button"
           aria-label="Mở trợ lý tuyển sinh" aria-expanded="false" aria-controls="vcPanel">
-    <svg class="vc-fab-mascot" viewBox="0 0 96 96" aria-hidden="true">
-      <defs><linearGradient id="botBody" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2b7ec3"/><stop offset="1" stop-color="#0b3969"/></linearGradient></defs>
-      <path d="M28 25c3-13 37-17 43 0l8 11v38c-8 15-55 15-63 0V36z" fill="url(#botBody)" stroke="#fff" stroke-width="3"/>
-      <rect x="23" y="31" width="50" height="35" rx="15" fill="#fff"/>
-      <circle cx="38" cy="47" r="5" fill="#134d8b"/><circle cx="58" cy="47" r="5" fill="#134d8b"/>
-      <path d="M38 57q10 8 20 0" fill="none" stroke="#c72127" stroke-width="3" stroke-linecap="round"/>
-      <path d="M48 20V11m-5 0h10" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-      <circle cx="48" cy="10" r="4" fill="#c72127"/>
-      <path d="M15 47l-8 7m74-7 8 7" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
-    </svg>
+    <img class="vc-fab-mascot"
+         src="/wp-content/themes/assets/images/mascot.svg"
+         alt="" aria-hidden="true" width="96" height="96">
     <svg class="vc-fab-ico ico-chat" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-5.2A8 8 0 0 1 13 4a8 8 0 0 1 8 8z"/>
       <path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>
@@ -1927,6 +1899,13 @@ function mdToHtml(src){
       continue;
     }
 
+    // Khi đang stream, một dòng bảng có thể xuất hiện trước dòng phân cách.
+    // Luôn tiêu thụ dòng này để tránh vòng lặp vô hạn trên main thread.
+    if(isTableRow(ln)){
+      out.push('<p>'+inlineMd(ln)+'</p>');
+      i++; continue;
+    }
+
     // blockquote
     if(/^\s*>\s?/.test(ln)){
       const buf = [];
@@ -1966,7 +1945,13 @@ function mdToHtml(src){
           !isTableRow(lines[i]) && !/^\u0000C\d+\u0000$/.test(lines[i].trim())){
       buf.push(lines[i]); i++;
     }
-    if(buf.length) out.push('<p>'+inlineMd(buf.join('\n')).replace(/\n/g,'<br>')+'</p>');
+    if(buf.length){
+      out.push('<p>'+inlineMd(buf.join('\n')).replace(/\n/g,'<br>')+'</p>');
+    } else {
+      // Failsafe: mọi vòng lặp phải tiến ít nhất một dòng.
+      out.push('<p>'+inlineMd(ln)+'</p>');
+      i++;
+    }
   }
   return out.join('');
 }
@@ -2325,14 +2310,20 @@ function mediaHtml(media){
 
 function sourcesHtml(sources){
   if(!sources || !sources.length) return '';
-  sources = Array.from(new Map(sources.map(s => [[s.mucLon,s.mucNho,s.url].join('|'), s])).values());
+  sources = Array.from(new Map(sources.map(s => [s.url, s])).values());
   return '<div class="vc-sources"><div class="vc-sources-label">Nguồn tham khảo</div><div class="vc-source-list">'+
     sources.map(s => '<div class="vc-source-item">'+
-      (s.mucLon ? '<div class="vc-source-major">'+escapeHtml(s.mucLon)+'</div>' : '')+
-      (s.mucNho ? '<div class="vc-source-minor">'+escapeHtml(s.mucNho)+'</div>' : '')+
-      '<a class="vc-src" href="'+escapeHtml(safeUrl(s.url,false))+'" target="_blank" rel="noopener noreferrer">'+
+      '<a class="vc-src" href="'+escapeHtml(safeUrl(s.url,false))+'" target="_blank" rel="noopener noreferrer" aria-label="Mở nguồn tham khảo">'+
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>'+
-      escapeHtml(s.url)+'</a></div>').join('')+'</div></div>';
+      'Link</a></div>').join('')+'</div></div>';
+}
+
+function isRefusalAnswer(text){
+  const normalized = String(text || '').toLowerCase().replace(/đ/g,'d')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return /ngoai (chu de|pham vi)/.test(normalized) ||
+    /khong the (ho tro|tra loi)/.test(normalized) ||
+    /chi (co the|ho tro).{0,80}(ai thuc chien|chuong trinh|tuyen sinh)/.test(normalized);
 }
 
 const ACT_ICONS = {
@@ -2381,7 +2372,6 @@ function addBotMsg(md, opts){
     '<div class="vc-botwrap"><div class="vc-bubble">'+
       mediaHtml(opts.media)+
       '<div class="vc-rich"></div>'+
-      sourcesHtml(opts.sources)+
     '</div><time class="vc-time">'+fmtTime(opts.ts||Date.now())+'</time></div>';
 
   thread.appendChild(wrap);
@@ -2389,6 +2379,7 @@ function addBotMsg(md, opts){
   const bubble = wrap.querySelector('.vc-bubble');
 
   const finish = (stopped) => {
+    rich.classList.remove('is-streaming');
     rich.innerHTML = mdToHtml(md);
     if(mdToPlain(md).trim() && !bubble.querySelector('.vc-answer-tools')){
       bubble.insertAdjacentHTML('afterbegin', expandHtml());
@@ -2403,6 +2394,9 @@ function addBotMsg(md, opts){
       s.className = 'vc-stopped'; s.textContent = 'Đã dừng';
       bubble.appendChild(s);
     }
+    if(opts.sources && opts.sources.length){
+      bubble.insertAdjacentHTML('beforeend', sourcesHtml(opts.sources));
+    }
     initCarousel(wrap);
     announce.textContent = mdToPlain(md).slice(0,600);
     scrollBottom();
@@ -2415,7 +2409,12 @@ function addBotMsg(md, opts){
       const step = Math.floor(rand(2,7));
       idx = Math.min(md.length, idx + step);
       const partial = md.slice(0, idx);
-      rich.innerHTML = mdToHtml(partial) + '<span class="vc-cursor">▌</span>';
+      rich.classList.add('is-streaming');
+      rich.textContent = partial;
+      const cursor = document.createElement('span');
+      cursor.className = 'vc-cursor';
+      cursor.textContent = '▌';
+      rich.appendChild(cursor);
       scrollBottom();
       if(idx >= md.length){ streaming = null; setStreamingUI(false); finish(false); return; }
       const last = md[idx-1];
@@ -2665,9 +2664,7 @@ async function submit(text){
     hideTyping();
     pendingRequest = null;
     setStreamingUI(false);
-    const sources = (payload.sources || []).map(s => ({
-      mucLon:s.muc_lon || '',
-      mucNho:s.muc_nho || '',
+    const sources = (isRefusalAnswer(payload.answer) ? [] : (payload.sources || [])).map(s => ({
       url:s.source_link
     }));
     addBotMsg(payload.answer, {
