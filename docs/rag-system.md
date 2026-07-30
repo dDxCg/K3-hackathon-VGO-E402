@@ -321,6 +321,8 @@ Kết quả đối chiếu hiện tại:
 | Vector lỗi | 0 |
 | Kích thước vector | 1.024 |
 
+JSON và ChromaDB đang khớp hoàn toàn với nhau. Tuy nhiên, source Facebook trong file Markdown hiện không có dấu `/` cuối URL, còn 47 records trong `chunks.json` và ChromaDB giữ URL cũ có dấu `/`. Khác biệt này không ảnh hưởng nội dung hay embedding, nhưng cần chạy lại chunking và embedding nếu muốn metadata khớp tuyệt đối với file nguồn.
+
 Phân bố theo nguồn:
 
 | Nguồn | Số chunk |
@@ -505,3 +507,157 @@ Thêm dòng sau vào đầu tài liệu:
 - Content trong ChromaDB phải giống content trong `chunks.json`.
 - Không đưa API key vào code, JSON, metadata hoặc Git.
 - Mọi kết quả phải giữ `source_link` để truy xuất nguồn.
+
+## 13. Kết quả kiểm thử pipeline
+
+Pipeline được kiểm thử từ dữ liệu nguồn đến retrieval, gồm kiểm tra schema, tính tái lập của chunking, ChromaDB integrity, vector embedding, truy vấn nghiệp vụ và các trường hợp bất thường.
+
+### 13.1. Chunking
+
+Kết quả:
+
+- 4 tài liệu tạo thành 82 chunks.
+- 82 ID duy nhất; không có content trùng hoàn toàn.
+- Kích thước chunk từ 64 đến 1.704 ký tự.
+- Trung vị 545,5 ký tự; trung bình 656,9 ký tự.
+- 5 chunks ngắn hơn 150 ký tự.
+- Không thiếu metadata bắt buộc.
+- Không thiếu file nguồn hoặc source link.
+- ID và content tái lập đúng khi chạy lại chunking.
+- 47 chunks khác metadata `source_link` do dấu `/` cuối URL Facebook.
+- 2 chunks còn chứa Markdown horizontal rule `---`.
+
+Một số hạn chế chất lượng dữ liệu:
+
+- Handbook được chia chủ yếu theo trang thay vì đề mục ngữ nghĩa.
+- Dữ liệu OCR còn số trang, từ bị dính và ký tự `Ð`.
+- Một số chunk rất ngắn, ví dụ “Cơ sở đào tạo” hoặc “Chỉ tiêu tuyển sinh”.
+- Nội dung gần trùng giữa handbook và trang tuyển sinh có thể chiếm nhiều vị trí trong top 5.
+
+### 13.2. Embedding và ChromaDB
+
+Kết quả integrity:
+
+- `chunks.json`: 82 chunks.
+- ChromaDB: 82 records.
+- ID thiếu hoặc thừa: 0.
+- Document sai khác: 0.
+- Metadata sai khác giữa JSON và ChromaDB: 0.
+- Vector lỗi hoặc vector zero: 0.
+- Mọi vector có 1.024 chiều và norm bằng 1.
+- Collection dùng model `intfloat/multilingual-e5-large` và cosine distance.
+
+Cặp nội dung có cosine similarity cao nhất đạt `0.976817`. Đây là hai đoạn gần trùng về “điểm khác biệt của chương trình” từ handbook và trang tuyển sinh.
+
+### 13.3. Retrieval nghiệp vụ
+
+Bộ kiểm thử gồm 15 câu hỏi có dấu về:
+
+- Thời lượng và cấu trúc chương trình.
+- Người trái ngành.
+- Bài thi đầu vào.
+- Nghỉ phép và bảo lưu.
+- Offer sau thực chiến.
+- Các track chuyên sâu.
+- Địa điểm đào tạo.
+- Học phí và phụ cấp.
+- Doanh nghiệp thực chiến.
+- Lịch học, cuối tuần, hotline và Robotics.
+
+Kết quả tự động:
+
+```text
+Hit@1 = 86,7%
+Hit@5 = 100%
+MRR   = 0,9222
+```
+
+Sau review thủ công, chunk top 1 của câu hỏi phụ cấp thực tế có đúng thông tin “trợ cấp 8 triệu đồng/tháng”, nhưng marker test chưa nhận diện từ “trợ cấp”. Hit@1 hiệu chỉnh theo review là khoảng `93,3%`.
+
+Hai trường hợp cần chú ý:
+
+- Câu hỏi phụ cấp: chunk chính xác xuất hiện ở top 1; các nguồn đúng khác ở top 3 và top 4.
+- Câu hỏi quy trình xin nghỉ: top 1 nói về số buổi nghỉ; quy trình chính xác nằm ở top 2.
+
+### 13.4. Truy vấn không dấu
+
+Câu thử:
+
+```text
+hoc vien co duoc bao luu sang khoa sau khong?
+```
+
+Kết quả không có mục “Bảo lưu” trong top 5. Top 1 trả về “Chỉ tiêu tuyển sinh”. Retrieval hiện chưa đủ tốt cho câu tiếng Việt không dấu.
+
+Hướng cải thiện chưa triển khai:
+
+- Hybrid search giữa vector và BM25.
+- Tạo thêm text index đã bỏ dấu cho cả document và query.
+- Khôi phục dấu hoặc rewrite câu hỏi trước embedding.
+- Kết hợp điểm lexical và cosine bằng Reciprocal Rank Fusion.
+
+### 13.5. Câu hỏi ngoài phạm vi
+
+Câu thử:
+
+```text
+Thời tiết Hà Nội ngày mai có mưa không?
+```
+
+Hệ thống vẫn trả 5 chunks. Kết quả top 1 có cosine similarity `0.775294` nhưng không trả lời được câu hỏi. Retrieval hiện không có confidence threshold hoặc cơ chế từ chối câu ngoài knowledge base.
+
+Hướng cải thiện chưa triển khai:
+
+- Thử nghiệm threshold ban đầu khoảng `0.80`.
+- Nếu top score dưới threshold, trả trạng thái `no_relevant_context`.
+- Cần calibrate threshold bằng tập câu hỏi trong và ngoài phạm vi lớn hơn trước khi dùng production.
+- Có thể kết hợp điều kiện về khoảng cách giữa top 1 và top 2.
+
+### 13.6. Ưu tiên nguồn
+
+Retrieval hiện xếp hạng hoàn toàn theo cosine similarity. Hệ thống chưa ưu tiên nguồn chính thức.
+
+Ví dụ câu hỏi địa điểm đào tạo:
+
+- Top 1 là feedback Facebook.
+- Top 2 là trang Web chính thức.
+
+Đối với chính sách, tuyển sinh và quyền lợi, nên rerank kết quả theo thứ tự:
+
+1. Website/PDF chính thức từ VinUni hoặc Vingroup.
+2. Tài liệu handbook.
+3. Feedback cộng đồng Facebook.
+
+Source priority chỉ nên dùng như tín hiệu rerank, không thay thế semantic relevance.
+
+### 13.7. Độ ổn định API
+
+Kết quả test latency:
+
+- Request đơn thường hoàn thành trong khoảng 5–20 giây.
+- Batch 15 câu không hoàn thành trước timeout kiểm thử 244 giây.
+- Một request trong bài test song song bị timeout 90 giây hai lần.
+- Retry hoạt động đúng và không trả vector giả khi API thất bại.
+
+Cấu hình vận hành khuyến nghị:
+
+```env
+EMBEDDING_BATCH_SIZE=4
+EMBEDDING_TIMEOUT_SECONDS=180
+EMBEDDING_MAX_RETRIES=4
+```
+
+Nên bổ sung log trước khi gửi từng batch, số lần retry và thời gian thực thi. Retrieval production chỉ gửi một câu hỏi mỗi request; không nên gom nhiều câu hỏi người dùng vào một batch lớn với provider hiện tại.
+
+### 13.8. Mức sẵn sàng
+
+Trạng thái hiện tại: `Conditional Pass`.
+
+Pipeline phù hợp demo/hackathon với câu hỏi tiếng Việt có dấu và nằm trong dữ liệu. Trước production cần ưu tiên:
+
+1. Hỗ trợ câu không dấu hoặc hybrid retrieval.
+2. Thêm confidence threshold cho câu ngoài phạm vi.
+3. Giảm batch và tăng timeout embedding.
+4. Rerank theo độ tin cậy của nguồn.
+5. Làm sạch OCR và chunk handbook theo đề mục ngữ nghĩa.
+6. Đồng bộ lại source metadata rồi rebuild ChromaDB.
