@@ -21,6 +21,27 @@
 | `data/` | Dữ liệu thật đã ẩn danh: chatlog VLearn tutor + 6 transcript bài giảng bản sạch — dùng để tìm bằng chứng và xây golden set |
 | `tham-khao/` | JTBD Playbook (PDF) + worksheet JTBD đầy đủ — đọc khi muốn đào sâu |
 
+## Cấu trúc repo hiện tại
+
+```
+VGO-K3-AI-Product-Hackathon/
+├── data/                          ← toàn bộ dữ liệu
+│   ├── vlearn-pack/               ← data pack gốc từ ban tổ chức
+│   │   ├── chatlog/               ← chatlog VLearn tutor (CSV + data dictionary)
+│   │   └── transcript/            ← 6 transcript bài giảng bản sạch
+│   ├── web/                       ← data crawl từ web
+│   │   ├── _raw/                  ← bản thô sau crawl
+│   │   └── _clean/                ← bản đã làm sạch (dùng bản này)
+│   └── Data_FaceBook_ckean/       ← feedback Facebook đã làm sạch
+├── src/
+│   ├── crawl/                     ← script crawl dữ liệu
+│   ├── chatbot/                   ← tầng chatbot / orchestration
+│   ├── rag/                       ← indexing + retrieval
+│   └── tools/                     ← tool cho agent gọi
+├── docs/                          ← tài liệu nội bộ nhóm
+└── tham-khao/                     ← JTBD Playbook + worksheet
+```
+
 ## Lịch — 6 mốc
 
 | Mốc | Khoá 3 | Khoá 4 |
