@@ -1,4 +1,4 @@
-## Thành viên
+## Thông tin thành viên
 
 | Họ và tên | Mã sinh viên |
 |---|---|
