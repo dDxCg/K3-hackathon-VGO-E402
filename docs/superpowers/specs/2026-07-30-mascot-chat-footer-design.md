@@ -8,12 +8,23 @@ Cập nhật `prototype.html` để mascot không che nội dung, panel chatbot 
 
 - Tạo asset `footer_mb_cropped.webp` từ `footer_mb.webp` trước khi thay đổi giao diện.
 - Chỉnh kích thước, vị trí và chuyển động của mascot chatbot.
+- Bỏ bong bóng “Chào bạn” và giữ badge `1` cho đến lần mở chatbot đầu tiên.
 - Ẩn mascot khi panel chatbot mở.
 - Thu nhỏ panel chatbot trên desktop.
 - Thay nền và bỏ sọc chéo ở footer, giữ nguyên nội dung footer.
 - Dịch nhóm menu chính desktop sang phải `1cm`.
 
 Không thay đổi dữ liệu hội thoại, nội dung footer, liên kết, social, cấu trúc thông tin trang hoặc luồng JavaScript của chatbot ngoài trạng thái hiển thị đã nêu.
+
+## Lời mời và badge chưa đọc
+
+- Giữ bong bóng lời mời dài xuất hiện ban đầu cùng nút đóng `×`.
+- Xóa hoàn toàn bong bóng ngắn “Chào bạn” khỏi HTML, CSS và JavaScript.
+- Khi người dùng nhấn `×` trên lời mời dài, chỉ ẩn lời mời; không mở panel và không đánh dấu chatbot là đã mở.
+- Sau khi đóng lời mời dài, đưa focus về nút mascot để thao tác bàn phím vẫn liên tục.
+- Badge đỏ `1` tiếp tục hiển thị vì người dùng chưa mở chatbot.
+- Badge chỉ biến mất khi người dùng thực sự mở panel chatbot lần đầu.
+- Sau khi panel đã từng được mở, đóng panel không làm badge `1` xuất hiện lại trong phiên hiện tại.
 
 ## Thứ tự triển khai
 
@@ -86,8 +97,10 @@ Dùng một khối CSS override tập trung ở cuối stylesheet nhúng trong `
 2. Mascot nhỏ hơn đúng `0.3cm`, cách mép phải `16px` và không che menu/nội dung.
 3. Mascot lắc nhẹ khi đóng, dừng khi hover/focus và không chuyển động trong reduced-motion.
 4. Mở chatbot làm mascot biến mất hoàn toàn; đóng chatbot làm mascot xuất hiện lại.
-5. Panel desktop đo `340 × 460px`, không vượt viewport và vẫn cuộn tin nhắn đúng.
-6. Mobile vẫn dùng panel toàn màn hình.
-7. Footer dùng ảnh crop, không còn sọc chéo và toàn bộ nội dung cũ vẫn hiển thị.
-8. Menu desktop dịch phải `1cm`; tablet/mobile không bị dịch và không tràn.
-9. Không phát sinh lỗi HTML/CSS/JavaScript mới trong kiểm tra cục bộ.
+5. Bong bóng “Chào bạn” không còn trong DOM hoặc luồng tương tác.
+6. Đóng lời mời ban đầu không mở chatbot và badge `1` vẫn hiển thị; mở panel lần đầu mới ẩn badge.
+7. Panel desktop đo `340 × 460px`, không vượt viewport và vẫn cuộn tin nhắn đúng.
+8. Mobile vẫn dùng panel toàn màn hình.
+9. Footer dùng ảnh crop, không còn sọc chéo và toàn bộ nội dung cũ vẫn hiển thị.
+10. Menu desktop dịch phải `1cm`; tablet/mobile không bị dịch và không tràn.
+11. Không phát sinh lỗi HTML/CSS/JavaScript mới trong kiểm tra cục bộ.
