@@ -57,6 +57,17 @@ def query_embedding(
     """Embedding câu hỏi với cùng model, dùng prefix query của E5."""
 
     query_prefix = os.getenv("EMBEDDING_QUERY_PREFIX", "query:").strip()
+    backend = os.getenv("EMBEDDING_QUERY_BACKEND", "local").strip().lower()
+    if backend == "local":
+        try:
+            from .local_embedding import embed_query
+        except ImportError:  # Chạy trực tiếp script trong src/rag
+            from local_embedding import embed_query
+        return embed_query(question, prefix=query_prefix)
+    if backend != "api":
+        raise RetrievalError(
+            "EMBEDDING_QUERY_BACKEND phải là 'local' hoặc 'api'"
+        )
     query_config = replace(config, document_prefix=query_prefix)
     vectors = embedding.request_embeddings([question], query_config, session)
     if len(vectors) != 1:
@@ -166,7 +177,8 @@ def retrieve(
         raise RetrievalError("top_k phải lớn hơn 0")
 
     embedding.load_env_file(env_file)
-    config = embedding.load_config(env_file)
+    query_backend = os.getenv("EMBEDDING_QUERY_BACKEND", "local").strip().lower()
+    config = embedding.load_config(env_file, require_api_key=query_backend == "api")
     if timeout_seconds is not None:
         if timeout_seconds <= 0:
             raise RetrievalError("timeout_seconds phải lớn hơn 0")

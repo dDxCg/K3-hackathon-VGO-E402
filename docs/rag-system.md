@@ -13,7 +13,7 @@ flowchart LR
     F[OpenRouter Embeddings API] --> E
     E --> G[(ChromaDB)]
     H[Câu hỏi người dùng] --> I[retrieval.py]
-    F --> I
+    L[multilingual-e5-large local] --> I
     G --> I
     I --> J[Top 5 chunks + metadata]
 ```
@@ -338,7 +338,7 @@ Phân bố theo nguồn:
 2. Đọc `EMBEDDING_MODEL` từ `.env`.
 3. Kiểm tra model trong `.env` trùng model của collection.
 4. Thêm prefix `query:` trước câu hỏi.
-5. Gọi API để tạo vector câu hỏi.
+5. Dùng `multilingual-e5-large` tải tại `models/` để tạo vector câu hỏi trên máy local.
 6. Gửi vector tới ChromaDB.
 7. Chroma tìm top 5 theo cosine distance.
 8. Chuyển distance thành similarity:
@@ -433,6 +433,23 @@ Output JSON một dòng:
 ```powershell
 python src\rag\retrieval.py "Câu hỏi" --compact
 ```
+
+Tải local query embedding model:
+
+```powershell
+python -m src.rag.download_model
+```
+
+Backend mặc định:
+
+```env
+EMBEDDING_QUERY_BACKEND=local
+LOCAL_EMBEDDING_MODEL_PATH=models/intfloat-multilingual-e5-large
+LOCAL_EMBEDDING_DEVICE=cpu
+```
+
+Document embedding trong ChromaDB vẫn được tạo bằng OpenRouter. Query embedding
+chạy local bằng đúng model và prefix nên tương thích với collection hiện có.
 
 ## 10. Quy trình cập nhật dữ liệu
 

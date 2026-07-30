@@ -113,10 +113,15 @@ def positive_float_env(name: str, default: float) -> float:
     return value
 
 
-def load_config(env_file: Path = DEFAULT_ENV_FILE) -> EmbeddingConfig:
+def load_config(
+    env_file: Path = DEFAULT_ENV_FILE,
+    require_api_key: bool = True,
+) -> EmbeddingConfig:
     load_env_file(env_file)
-    api_key = required_env("EMBEDDING_API")
-    if "..." in api_key:
+    api_key = os.getenv("EMBEDDING_API", "").strip()
+    if require_api_key and not api_key:
+        raise ConfigurationError("Thiếu biến EMBEDDING_API trong .env")
+    if api_key and "..." in api_key:
         raise ConfigurationError(
             "EMBEDDING_API đang là khóa rút gọn có '...'. "
             "Hãy thay bằng API key đầy đủ trong .env."

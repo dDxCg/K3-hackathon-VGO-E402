@@ -10,6 +10,7 @@ from pathlib import Path
 from src.chatbot.mock.rag import Chunk
 
 from . import embedding
+from .local_embedding import LocalEmbeddingError
 from .retrieval import DEFAULT_ENV_FILE, RetrievalError, retrieve
 
 DEFAULT_CHUNKS_FILE = Path(__file__).resolve().parent / "chunks.json"
@@ -137,7 +138,12 @@ class ChromaRetriever:
                 timeout_seconds=self.timeout_seconds,
                 max_retries=self.max_retries,
             )
-        except (RetrievalError, embedding.ConfigurationError, embedding.EmbeddingAPIError) as exc:
+        except (
+            RetrievalError,
+            LocalEmbeddingError,
+            embedding.ConfigurationError,
+            embedding.EmbeddingAPIError,
+        ) as exc:
             self.embedding_available = False
             print(
                 f"Embedding chưa phản hồi trong giới hạn demo; dùng lexical fallback: {exc}",
