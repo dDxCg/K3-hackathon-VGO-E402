@@ -1,0 +1,39 @@
+# Brief định hướng đề tài — Chatbot tư vấn tuyển sinh AI Thực Chiến VinUni
+
+Hướng **C — Làn mở** · tính năng mới, nhúng landing page · K3: CP1 10:00 N1 · `spec.md` chốt 23:59 N1
+
+**S — Tình huống.** Chương trình tuyển sinh theo từng khoá, mỗi khoá đổi lịch, đổi địa điểm, đổi mốc. Thông tin rải trên landing page, các bài đăng cũ-mới trong group, và trong câu trả lời của người đã học khoá trước; người quan tâm đăng câu hỏi công khai rồi chờ có người rảnh trả lời.
+
+**C — Vấn đề.** 6/6 mẩu công khai đã thu là câu hỏi người hỏi **tự đối chiếu hoàn cảnh riêng**, không phải "chương trình có gì": 3/6 hỏi lịch học và cách cân bằng với việc đang học/đang làm, 1/6 địa điểm (người ở HCM), 1/6 nội dung ĐGNL, 1/6 khoá đang tuyển kèm trạng thái hồ sơ, **0/6 hỏi học phí**; 1 mẩu đi hỏi người khoá trước chứ không hỏi kênh chính thức (`evidence-log.md`, n=6, hạn ≥20 mẩu 16:00 N1). Quyết định nộp bị treo tới khi có người trả lời, và câu trả lời nhận được là của khoá cũ.
+
+**Q — Câu hỏi.** Trong 1,5 ngày, lát cắt nào trả đúng lớp câu hỏi *"tôi có theo nổi không"* mà không thành máy từ chối, cũng không thành máy hứa?
+
+**A — Trả lời.** Lát cắt: **người đang cân nhắc nộp · hỏi một câu để quyết nộp hay thôi · AI quyết định câu này có căn cứ trong bộ tài liệu tuyển sinh chính thức hay không · nhận dữ kiện ràng buộc (lịch học cụ thể, địa điểm, hình thức, mốc) kèm trích nguồn + tem khoá/ngày để tự đối chiếu, hoặc câu nói chưa đủ căn cứ kèm đường chuyển người phụ trách.** Mức **conditional** (02-guide §2.3 · R2 — 4đ): sai lịch học, sai địa điểm hay sai khoá thì người chịu là ứng viên — lỡ hạn hoặc nộp sai đợt, qua mốc không sửa được. Nguyên tắc sống của đề tài: **đưa dữ kiện, không kết luận thay**.
+
+| Ứng viên | Bao nhiêu người gặp | Tần suất | Mỗi lần tốn gì | Build nổi 1,5 ngày? | Chọn? |
+|---|---|---|---|---|---|
+| **Ư1 · Hỏi-đáp có căn cứ + tem phiên bản, trả dữ kiện ràng buộc** | **6/6 mẩu** có ≥1 phần thuộc đây | Mỗi mùa tuyển sinh, mỗi người nhiều lần | Chờ tới khi có người rảnh trả lời `[CẦN ĐO: khoảng cách đăng câu hỏi → comment trả lời đầu, đọc timestamp — Đỗ Đức Cường — 16:00 N1]` + nhận tin khoá cũ mà không biết là cũ (mẩu 3) | **Có** — 1 AI call + KB ~20 mục | **CHỌN** |
+| Ư2 · Tra trạng thái hồ sơ cá nhân | 1/6 (mẩu 6) | Suốt thời gian chờ | Hoang mang kéo dài | **Không** — không DB, không auth, là dữ liệu cá nhân người thật (01-de-bai §3) | Loại |
+| Ư3 · Sàng lọc độ phù hợp, khuyên nên nộp | 3/6 ẩn ý câu này | 1 lần/người | Quyết định sai khoá, sai thời điểm | **Không nên** — không có căn cứ để kết luận, dễ thành cam kết đầu ra không có thật | Loại |
+| Ư4 · Bản tin câu hỏi tồn cho đội tuyển sinh | Đội tuyển sinh — không đếm được từ ngoài | Hằng ngày | Trả lời câu lặp | **Không** — đổi job executor, không có luồng câu hỏi vào thật | Loại |
+
+**Chọn Ư1** — ứng viên duy nhất vừa có evidence đếm được (6/6), vừa có nguồn để grounding, vừa demo được cả case chuẩn lẫn case hiểm trong 5 phút (R1 — 3đ · R2 — 3đ).
+
+| Phase 1 **CÓ** làm | Phase 1 **KHÔNG** làm |
+|---|---|
+| Chủ đề: lịch học · địa điểm · hình thức · ĐGNL · hồ sơ cần gì · mốc · khoá đang tuyển | Tra trạng thái hồ sơ, điểm, kết quả — kể cả khi user đưa email/mã hồ sơ |
+| Mọi phát biểu có mã mục trích dẫn + tem `khoá · hiệu lực dd/mm` | Khuyên "nên nộp / sẽ đậu", nói về cam kết đầu ra, thu nhập sau khoá |
+| Không có mục khớp → nói rõ chưa đủ căn cứ + chuyển người + câu hỏi soạn sẵn | Trả lời từ kiến thức nền của model khi tài liệu im lặng ("thường thì...") |
+| Hai mục mâu thuẫn → hiện cả hai kèm ngày hiệu lực, không tự chọn giúp user | Tích hợp thật vào web, đăng nhập, lưu thông tin cá nhân; đa ngôn ngữ; voice |
+
+**3 giả định lớn nhất** *(bảng đầy đủ: File 2 §10)*
+1. Mining bình luận công khai trong group **được tính evidence hợp lệ, không đụng ràng buộc §3** `[Inference]` — sai thì mất 6đ R1, phải dựng lại evidence trong nửa ngày.
+2. Tài liệu chính thức **có lịch học chi tiết tới thứ/giờ/địa điểm/hình thức** `[Inference]` — sai thì 3/6 câu hỏi nhiều nhất rơi vào "chưa đủ căn cứ", demo thành máy từ chối.
+3. Người hỏi **chấp nhận dữ kiện + tự đối chiếu**, không cần review trải nghiệm từ người khoá trước `[Inference]` — sai thì sản phẩm không thay được alternative hôm nay.
+
+**Việc 30 phút tới — chưa trả lời được thì chưa đi tiếp**
+1. **Bộ tài liệu chính thức gồm đúng nguồn nào, có lịch học chi tiết tới thứ/giờ/địa điểm chưa?** — Nguyễn Thanh Hoàn, 14:00 N1.
+2. **Ai xin TA xác nhận tại CP1: mining group là evidence hợp lệ, và golden set thay "≥10 case từ chatlog thật" bằng "≥10 case từ mining log nguyên văn"?** — Lương Thanh Trang hỏi, Đỗ Đức Cường mang số.
+3. **3 willing user tên gì?** — Lương Thanh Trang, 12:00 N1. Không có tên là không đạt tiêu chí 5.
+
+→ Phân tích đầy đủ, đặc tả quyết định, 10 kịch bản 4 lớp, golden set, bảng giả định: **`brief-de-tai-chi-tiet.md`**.
