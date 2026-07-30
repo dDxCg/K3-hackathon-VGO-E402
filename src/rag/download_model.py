@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 from huggingface_hub import snapshot_download
@@ -21,10 +22,10 @@ IGNORE_PATTERNS = [
 ]
 
 
-def download_model(repo_id: str = DEFAULT_REPO, target: Path = DEFAULT_TARGET) -> Path:
+def download_model(target: Path = DEFAULT_TARGET) -> Path:
     target.mkdir(parents=True, exist_ok=True)
     snapshot_download(
-        repo_id=repo_id,
+        repo_id=DEFAULT_REPO,
         local_dir=target,
         ignore_patterns=IGNORE_PATTERNS,
         max_workers=4,
@@ -36,11 +37,12 @@ def download_model(repo_id: str = DEFAULT_REPO, target: Path = DEFAULT_TARGET) -
 
 
 def main() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Tải E5 embedding model về local")
-    parser.add_argument("--repo", default=DEFAULT_REPO)
     parser.add_argument("--target", type=Path, default=DEFAULT_TARGET)
     args = parser.parse_args()
-    path = download_model(args.repo, args.target)
+    path = download_model(args.target)
     print(f"Model sẵn sàng tại: {path.resolve()}")
 
 

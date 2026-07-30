@@ -18,7 +18,7 @@ Ngày: 2026-07-30 · Bộ test: [tests/e2e/](../tests/e2e/) · Model: `openai/gp
 
 Bộ test hiện có ([tests/chatbot/](../tests/chatbot/), 99 case) kịch bản hoá toàn bộ phản hồi model nên chạy offline và xác định — nó kiểm **cơ chế** (vòng ReAct, parser, prompt, tra ngược nguồn). Nhưng chính vì model bị kịch bản hoá, nó **không thể** trả lời được câu hỏi quan trọng nhất: *model thật, với dữ liệu thật, có tuân thủ chính sách không?*
 
-E2E chạy hết stack thật: ChromaDB đã embedding → embedding API → 2 tool tuyển sinh → model thật.
+E2E chạy hết stack thật: ChromaDB → E5-large local → 2 tool tuyển sinh → model chat thật.
 
 ### Nguyên tắc viết assert
 
@@ -44,7 +44,7 @@ Cách này chấp nhận nhiều cách diễn đạt, nhưng không tha cho vi�
 
 [tests/e2e/conftest.py](../tests/e2e/conftest.py) — fixture `run_case` chạy câu hỏi qua stack thật rồi ghi lại tool sequence, số bước, điểm retrieval, thời gian; cuối phiên đổ ra JSON để dựng bảng số liệu trong báo cáo này. Mỗi case dựng agent mới để lịch sử case trước không ảnh hưởng case sau.
 
-Marker `e2e` bị loại mặc định (`addopts = "-m 'not live and not e2e'"`) vì tốn tiền và mất ~7 phút. Tự skip nếu thiếu `OPENAI_API` hoặc `EMBEDDING_API`.
+Marker `e2e` bị loại mặc định (`addopts = "-m 'not live and not e2e'"`) vì gọi model chat thật. Tự skip nếu thiếu `OPENAI_API`; E5-large phải có trên máy local.
 
 ---
 
@@ -174,4 +174,4 @@ uv run pytest -m e2e -k ho_so       # chạy riêng một case
 E2E_REPORT=out.json uv run pytest -m e2e   # đổ số liệu từng case ra JSON
 ```
 
-Điều kiện: `.env` có `OPENAI_API` + `EMBEDDING_API`; ChromaDB đã build (`python src/rag/embedding.py`).
+Điều kiện: `.env` có `OPENAI_API`; E5-large local đã tải và ChromaDB đã build (`python src/rag/embedding.py`).

@@ -1,41 +1,32 @@
-# Benchmark embedding — multilingual-e5-large
+# Benchmark embedding local — multilingual-e5-large
 
-Ngày chạy: 2026-07-30T16:59:42+07:00 · Top-k: 5
+Ngày chạy: 2026-07-30T19:40:58+07:00 · Top-k: 5
 
-Phạm vi: đo query embedding và Chroma retrieval; **không** đo thời gian sinh câu trả lời của chat LLM.
+Phạm vi: model local, query embedding và Chroma retrieval; **không** đo chat LLM.
 
 ## Tổng hợp
 
-| Backend | Model embedding | Model load (s) | Embedding mean thành công (s) | Median (s) | P95 (s) | Mean attempt gồm lỗi (s) | Total retrieval mean (s) | Thành công |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| local | `intfloat/multilingual-e5-large` | 9.602 | 0.203 | 0.186 | 0.316 | 0.203 | 0.205 | 10/10 |
-| openrouter | `intfloat/multilingual-e5-large` | N/A | 24.772 | 24.772 | 24.772 | 56.477 | 24.774 | 1/10 |
+| Model embedding | Model load (s) | Embedding mean (s) | Median (s) | P95 (s) | Total retrieval mean (s) | Thành công |
+|---|---:|---:|---:|---:|---:|---:|
+| `intfloat/multilingual-e5-large` | 29.007 | 0.442 | 0.350 | 1.080 | 0.446 | 10/10 |
 
-## Chi tiết 10 câu hỏi
+## Chi tiết
 
-| # | Câu hỏi | Local embedding (s) | OpenRouter embedding (s) | Local total (s) | OpenRouter total (s) | Top chunk trùng? |
-|---:|---|---:|---:|---:|---:|:---:|
-| 1 | Chương trình học trong bao lâu? | 0.316 | 24.772 | 0.319 | 24.774 | ✓ |
-| 2 | Lịch học hằng ngày như thế nào? | 0.251 | TIMEOUT (60.0s) | 0.253 | TIMEOUT (60.0s) | — |
-| 3 | Địa điểm học ở đâu? | 0.165 | TIMEOUT (60.0s) | 0.166 | TIMEOUT (60.0s) | — |
-| 4 | Điều kiện dự tuyển là gì? | 0.217 | TIMEOUT (60.0s) | 0.219 | TIMEOUT (60.0s) | — |
-| 5 | Hồ sơ đăng ký gồm những gì? | 0.188 | TIMEOUT (60.0s) | 0.190 | TIMEOUT (60.0s) | — |
-| 6 | Bài đánh giá năng lực kiểm tra nội dung gì? | 0.184 | TIMEOUT (60.0s) | 0.185 | TIMEOUT (60.0s) | — |
-| 7 | Chương trình có những track nào? | 0.157 | TIMEOUT (60.0s) | 0.159 | TIMEOUT (60.0s) | — |
-| 8 | Có thể vừa học vừa đi làm không? | 0.180 | TIMEOUT (60.0s) | 0.182 | TIMEOUT (60.0s) | — |
-| 9 | Hạn nộp hồ sơ khóa đang tuyển là khi nào? | 0.179 | TIMEOUT (60.0s) | 0.181 | TIMEOUT (60.0s) | — |
-| 10 | Học viên có được hỗ trợ học phí không? | 0.192 | TIMEOUT (60.0s) | 0.194 | TIMEOUT (60.0s) | — |
-
-## Kết luận nhanh
-
-- Local: 10/10 thành công; embedding trung bình 0.203 giây/câu sau warmup.
-- OpenRouter: 1/10 thành công; 9 lỗi/timeout.
-- Trên request OpenRouter thành công, local nhanh hơn khoảng **122.1×** ở bước embedding.
+| # | Câu hỏi | Local embedding (s) | Chroma query (s) | Total (s) | Top chunk |
+|---:|---|---:|---:|---:|---|
+| 1 | Chương trình học trong bao lâu? | 1.080 | 0.005 | 1.085 | chunk_9286a7121125a5ea |
+| 2 | Lịch học hằng ngày như thế nào? | 0.361 | 0.005 | 0.367 | chunk_a5053f371cbe59c1 |
+| 3 | Địa điểm học ở đâu? | 0.294 | 0.005 | 0.298 | chunk_6a231d6360e44323 |
+| 4 | Điều kiện dự tuyển là gì? | 0.328 | 0.003 | 0.331 | chunk_8859b11be20d1d08 |
+| 5 | Hồ sơ đăng ký gồm những gì? | 0.338 | 0.002 | 0.341 | chunk_6052aa2c8b2a9338 |
+| 6 | Bài đánh giá năng lực kiểm tra nội dung gì? | 0.495 | 0.004 | 0.498 | chunk_1857a1bbe80d8eab |
+| 7 | Chương trình có những track nào? | 0.310 | 0.005 | 0.315 | chunk_a787c7ad6db8eec3 |
+| 8 | Có thể vừa học vừa đi làm không? | 0.322 | 0.006 | 0.328 | chunk_1d2406442beb2481 |
+| 9 | Hạn nộp hồ sơ khóa đang tuyển là khi nào? | 0.511 | 0.003 | 0.514 | chunk_868464c016258eec |
+| 10 | Học viên có được hỗ trợ học phí không? | 0.379 | 0.007 | 0.387 | chunk_a92bd5324bc0c968 |
 
 ## Ghi chú đo
 
-- `model_load`: chi phí nạp weights local một lần khi app khởi động; không cộng vào từng query.
-- `embedding`: chỉ thời gian biến một câu hỏi thành vector 1.024 chiều.
-- `Chroma query`: chỉ thời gian tìm top-k bằng vector đã có.
+- `model_load`: nạp weights local một lần khi process khởi động.
+- `embedding`: biến câu hỏi thành vector 1.024 chiều bằng E5-large local.
 - `total retrieval`: embedding + Chroma query; chưa gồm chat LLM.
-- OpenRouter dùng cùng model `intfloat/multilingual-e5-large`; chênh lệch chủ yếu là network/provider.

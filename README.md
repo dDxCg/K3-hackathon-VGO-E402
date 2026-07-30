@@ -61,25 +61,31 @@ Web demo dùng `prototype.html` làm giao diện; `src/app.py` phục vụ trang
 python -m src.app
 ```
 
+`prototype.html` gọi `POST /api/chat` để chat và `POST /api/reset` khi xóa hội
+thoại. CSS và SVG được nhúng trong trang, không cần thư mục asset bên ngoài.
+
 Mở `http://127.0.0.1:8000`. Kiểm tra server:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/api/health
 ```
 
-Yêu cầu: `.env` có `EMBEDDING_API`, `EMBEDDING_MODEL`, `OPENAI_API`,
-`OPENAI_MODEL`; ChromaDB đã có dữ liệu tại `src/rag/chroma_db`.
+Yêu cầu: `.env` có `OPENAI_API`, `OPENAI_MODEL`; model embedding local đã tải
+và ChromaDB đã có dữ liệu tại `src/rag/chroma_db`.
 
-Query embedding mặc định chạy local bằng model tại
-`models/intfloat-multilingual-e5-large`. Cấu hình:
+Toàn bộ document/query embedding dùng duy nhất `intfloat/multilingual-e5-large`
+từ `models/intfloat-multilingual-e5-large`. Cấu hình local:
+
+Toàn bộ logic nằm trong một file `src/rag/embedding.py`: đọc `chunks.json`,
+thêm prefix E5, encode local và ghi vector vào ChromaDB.
 
 ```env
-EMBEDDING_QUERY_BACKEND=local
 LOCAL_EMBEDDING_MODEL_PATH=models/intfloat-multilingual-e5-large
 LOCAL_EMBEDDING_DEVICE=cpu
+EMBEDDING_BATCH_SIZE=8
+EMBEDDING_DOCUMENT_PREFIX=passage:
+EMBEDDING_QUERY_PREFIX=query:
 ```
-
-Đổi `EMBEDDING_QUERY_BACKEND=api` nếu cần quay lại OpenRouter embedding.
 
 Tải model lần đầu (~2,1 GB):
 
@@ -90,10 +96,10 @@ python -m src.rag.download_model
 App nạp model một lần khi khởi động. Trên CPU hiện tại, warmup khoảng 10–15 giây;
 mỗi query embedding sau đó khoảng 0,2–0,4 giây.
 
-Benchmark cùng 10 câu hỏi giữa local và OpenRouter, xuất JSON + Markdown:
+Benchmark local với 10 câu hỏi, xuất JSON + Markdown:
 
 ```powershell
-python -m eval.benchmark_embedding --backend both
+python -m eval.benchmark_embedding
 ```
 
 Kết quả nằm trong `eval/results/embedding-benchmark.json` và `.md`. Báo cáo tách

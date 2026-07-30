@@ -1,4 +1,4 @@
-from src.chatbot.mock.rag import Chunk
+from src.chatbot.types import Chunk
 from src.demo_service import DemoService, classify_restricted
 
 

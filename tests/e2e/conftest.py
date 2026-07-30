@@ -1,7 +1,7 @@
 """Hạ tầng cho test end-to-end: chạy hết stack thật, ghi lại số liệu từng case.
 
 Khác với `tests/chatbot/` (mọi thứ kịch bản hoá, offline), ở đây không mock gì:
-ChromaDB thật, embedding API thật, model thật. Vì vậy assert phải nhắm vào
+ChromaDB thật, E5-large local thật, model chat thật. Vì vậy assert phải nhắm vào
 **hành vi bắt buộc** (gọi đúng tool, không bịa, có trích nguồn) chứ không nhắm
 vào từng chữ trong câu trả lời — model sinh khác nhau mỗi lượt.
 """

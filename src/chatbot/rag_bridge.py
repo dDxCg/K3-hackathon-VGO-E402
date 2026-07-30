@@ -23,21 +23,11 @@ SOURCE_TYPE_BY_LOAI_NGUON = {
 
 
 def _load_retrieve() -> Callable[..., dict[str, Any]]:
-    """Import muộn `rag.retrieval` để chỉ trả giá chromadb/requests khi thật sự dùng.
+    """Import muộn để chỉ nạp Chroma và model local khi thật sự retrieval."""
 
-    `retrieval.py` dùng `import embedding` (absolute), nên `src/rag` phải nằm
-    trên sys.path — thêm vào đây thay vì sửa file của tầng RAG.
-    """
-    import sys
-    from pathlib import Path
+    from src.rag.retrieval import retrieve
 
-    rag_dir = Path(__file__).resolve().parents[1] / "rag"
-    if str(rag_dir) not in sys.path:
-        sys.path.insert(0, str(rag_dir))
-
-    import retrieval  # type: ignore[import-not-found]
-
-    return retrieval.retrieve
+    return retrieve
 
 
 def payload_to_chunks(payload: dict[str, Any]) -> list[Chunk]:
@@ -71,8 +61,7 @@ class ChromaRetriever:
     Nhớ kết quả lượt gần nhất (`chunk_by_id`) để `attach_source_link` đổi
     `chunk_ids` do model đưa thành nguồn — model chỉ biết id, không biết URL.
 
-    Có cache LRU vì mỗi miss là một request embedding (đo được 20-115s, xem
-    docs/chatbot-e2e-report.md), trong khi người dùng hay hỏi lại câu tương tự.
+    Có cache LRU để tránh encode lại câu hỏi lặp và giảm tải CPU/GPU local.
     """
 
     def __init__(
