@@ -31,9 +31,9 @@ Widget có hai bong bóng lời mời độc lập:
 ## Mascot
 
 - Bỏ nền màu, viền trắng, khung tròn, bo tròn và phần cắt nội dung quanh mascot.
-- Tăng đồng thời chiều rộng và chiều cao thêm `1cm` so với kích thước hiện tại:
-  - Desktop: từ `70px` lên `calc(70px + 1cm)`.
-  - Mobile: từ `64px` lên `calc(64px + 1cm)`.
+- Tăng đồng thời chiều rộng và chiều cao thêm `0.5cm` so với kích thước hiện tại:
+  - Desktop: từ `70px` lên `calc(70px + 0.5cm)`.
+  - Mobile: từ `64px` lên `calc(64px + 0.5cm)`.
 - Giữ vùng bấm dễ thao tác, trạng thái focus bàn phím và hiệu ứng hover nhẹ không làm biến dạng mascot.
 - Điều chỉnh vị trí panel và bong bóng để không chồng lên mascot lớn hơn.
 
@@ -71,5 +71,5 @@ Widget có hai bong bóng lời mời độc lập:
 5. Tải lại trang: hội thoại cũ không được phục hồi và bong bóng dài xuất hiện lại.
 6. Nút phóng to có trên từng câu trả lời bot; hộp đọc hiển thị đúng văn bản, ảnh và bảng, đồng thời đóng được bằng cả ba cách.
 7. Nút đính kèm và dòng chú thích AI không còn trong giao diện hoặc luồng bàn phím.
-8. Mascot không có khung tròn và lớn hơn đúng `1cm` theo cả chiều rộng lẫn chiều cao trên desktop và mobile.
+8. Mascot không có khung tròn và lớn hơn đúng `0.5cm` theo cả chiều rộng lẫn chiều cao trên desktop và mobile.
 9. Widget hoạt động ở desktop, tablet và mobile; không có lỗi JavaScript trong console.
