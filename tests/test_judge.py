@@ -208,6 +208,24 @@ def test_doi_prompt_version_thi_cache_miss(tmp_path):
     assert v2.llm_calls == 1
 
 
+def test_khong_cache_loi_ha_tang(tmp_path):
+    """Cache lỗi hết-credit/timeout sẽ đóng băng nó vĩnh viễn: nạp thêm credit rồi
+    chạy lại vẫn ăn cache None. Chỉ được cache kết quả thành công."""
+
+    def no_du(messages):
+        raise RuntimeError("Error code: 402 - hết credit")
+
+    cache = tmp_path / "judge_cache.json"
+    failed = Judge(complete=no_du, cache_path=cache)
+    assert failed.answer_relevancy(SAMPLE).score is None
+    failed.save_cache()
+
+    again = Judge(complete=ScriptedJudge(score(0.9)), cache_path=cache)
+    result = again.answer_relevancy(SAMPLE)
+    assert result.score == 0.9, "chạy lại sau khi hết lỗi phải chấm lại, không ăn cache None"
+    assert result.cached is False
+
+
 def test_doi_answer_thi_cache_miss(tmp_path):
     cache = tmp_path / "judge_cache.json"
     judge = Judge(complete=ScriptedJudge(score(0.9)), cache_path=cache)
@@ -222,9 +240,32 @@ def test_doi_answer_thi_cache_miss(tmp_path):
 # --- settings ------------------------------------------------------------
 
 
+def test_uu_tien_judge_api_hon_openai_api(monkeypatch):
+    """Judge có key riêng: nhà cung cấp và hạn mức không nhất thiết trùng sản phẩm."""
+    monkeypatch.setenv("OPENAI_API", "key-san-pham")
+    monkeypatch.setenv("JUDGE_API", "key-judge")
+    monkeypatch.setenv("JUDGE_MODEL", "google/gemini-2.5-flash")
+    assert JudgeSettings.from_env().api_key == "key-judge"
+
+
+def test_khong_co_judge_api_thi_muon_openai_api(monkeypatch):
+    monkeypatch.setenv("OPENAI_API", "key-san-pham")
+    monkeypatch.delenv("JUDGE_API", raising=False)
+    monkeypatch.setenv("JUDGE_MODEL", "google/gemini-2.5-flash")
+    assert JudgeSettings.from_env().api_key == "key-san-pham"
+
+
+def test_judge_base_url_rieng_duoc_uu_tien(monkeypatch):
+    monkeypatch.setenv("JUDGE_API", "k")
+    monkeypatch.setenv("JUDGE_MODEL", "google/gemini-2.5-flash")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://a.invalid/v1")
+    monkeypatch.setenv("JUDGE_BASE_URL", "https://b.invalid/v1")
+    assert JudgeSettings.from_env().base_url == "https://b.invalid/v1"
+
+
 def test_judge_model_trung_model_san_pham_thi_raise(monkeypatch):
     """Model tự chấm bài mình viết là self-preference bias."""
-    monkeypatch.setenv("OPENAI_API", "test-key")
+    monkeypatch.setenv("JUDGE_API", "test-key")
     monkeypatch.setenv("OPENAI_MODEL", "openai/gpt-4o-mini")
     monkeypatch.setenv("JUDGE_MODEL", "openai/gpt-4o-mini")
     with pytest.raises(RuntimeError, match="self-preference"):
@@ -232,15 +273,16 @@ def test_judge_model_trung_model_san_pham_thi_raise(monkeypatch):
 
 
 def test_judge_model_khac_thi_chay(monkeypatch):
-    monkeypatch.setenv("OPENAI_API", "test-key")
+    monkeypatch.setenv("JUDGE_API", "test-key")
     monkeypatch.setenv("OPENAI_MODEL", "openai/gpt-4o-mini")
     monkeypatch.setenv("JUDGE_MODEL", "google/gemini-2.5-flash")
     assert JudgeSettings.from_env().model == "google/gemini-2.5-flash"
 
 
-def test_thieu_api_key_thi_raise(monkeypatch):
+def test_thieu_ca_hai_key_thi_raise(monkeypatch):
+    monkeypatch.delenv("JUDGE_API", raising=False)
     monkeypatch.delenv("OPENAI_API", raising=False)
-    with pytest.raises(RuntimeError, match="OPENAI_API"):
+    with pytest.raises(RuntimeError, match="JUDGE_API"):
         JudgeSettings.from_env()
 
 

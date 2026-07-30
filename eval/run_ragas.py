@@ -83,6 +83,10 @@ def build_samples(
             if not contexts:
                 skipped.append(f"{item['id']}: results thiếu `retrieved_contexts`")
                 continue
+        # Observation của tool là nguồn dữ kiện thứ hai, ngang hàng chunk RAG. Không đưa
+        # vào thì hotline/email do contact_support trả về bị chấm là bịa — đo được ở lần
+        # chạy 2 case đầu: N02 tụt còn faithfulness 0.40 vì đúng lý do này.
+        contexts = list(contexts) + list(record.get("tool_observations") or [])
         samples.append(
             JudgeSample(
                 id=item["id"],

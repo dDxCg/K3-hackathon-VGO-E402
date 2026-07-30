@@ -3,13 +3,18 @@
 Thiết kế: docs/design-agent-tools.md §2.
 """
 
+import os
 from dataclasses import dataclass, field
 from typing import Literal
 
 Reason = Literal["no_grounding", "out_of_scope", "conflicting_sources", "personal_data_request"]
 
-# Similarity score dưới ngưỡng này coi là "không có căn cứ" — chốt cùng team 2026-07-30.
-NO_GROUNDING_THRESHOLD = 0.7
+# NGUỒN DUY NHẤT của ngưỡng grounding. Trước đây hằng số này nằm ở ba chỗ độc lập
+# (rag_bridge, prompt, contact_support) và đã lệch nhau thật: rag_bridge đổi lên 0.85
+# còn hai chỗ kia vẫn 0.7 — prompt báo "không đủ căn cứ" trong khi guard nói ngược lại.
+# Đặt ở `src/tools` vì module này không import gì, nên mọi tầng khác đều lấy được
+# mà không tạo vòng import.
+NO_GROUNDING_THRESHOLD = float(os.getenv("GROUNDING_THRESHOLD", "0.85"))
 
 # Nguồn: data/web/_clean/thong-tin-tuyen-sinh-chuong-trinh-dao-tao-nhan-tai-ai-thuc-chien-khoa-co-ban.md
 CONTACT_CHANNELS = {

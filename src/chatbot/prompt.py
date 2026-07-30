@@ -6,6 +6,8 @@ from typing import Any, Sequence
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
+from ..tools.contact_support import NO_GROUNDING_THRESHOLD
+
 PROMPT_DIR = Path(__file__).resolve().parent / "prompts"
 
 _env = Environment(
@@ -40,7 +42,7 @@ def render_system_prompt(
     context: str = "",
     react: bool = False,
     max_steps: int = 6,
-    threshold: float = 0.7,
+    threshold: float = NO_GROUNDING_THRESHOLD,
     template: str = "system.j2",
 ) -> str:
     """Đổ tool signature + chunk RAG + giao thức ReAct vào system prompt.

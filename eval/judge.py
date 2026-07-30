@@ -65,9 +65,11 @@ class JudgeSettings:
 
     @classmethod
     def from_env(cls) -> "JudgeSettings":
-        api_key = os.getenv("OPENAI_API", "")
+        # Key riêng cho judge: nhà cung cấp / hạn mức / model của judge không nhất thiết
+        # trùng sản phẩm. Chỉ mượn OPENAI_API khi thật sự không có JUDGE_API.
+        api_key = os.getenv("JUDGE_API", "") or os.getenv("OPENAI_API", "")
         if not api_key:
-            raise RuntimeError("Thiếu OPENAI_API trong .env")
+            raise RuntimeError("Thiếu JUDGE_API (hoặc OPENAI_API) trong .env")
         model = os.getenv("JUDGE_MODEL", DEFAULT_JUDGE_MODEL)
         product_model = os.getenv("OPENAI_MODEL", "openai/gpt-4o-mini")
         if model == product_model:
@@ -78,7 +80,8 @@ class JudgeSettings:
         return cls(
             api_key=api_key,
             model=model,
-            base_url=os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1"),
+            base_url=os.getenv("JUDGE_BASE_URL", "")
+            or os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1"),
             timeout_seconds=float(os.getenv("JUDGE_TIMEOUT_SECONDS", "90")),
             max_retries=int(os.getenv("JUDGE_MAX_RETRIES", "2")),
         )
@@ -248,6 +251,10 @@ class Judge:
             result = fn()
         except Exception as exc:  # một sample hỏng không được giết cả run
             result = MetricResult(None, {}, f"{type(exc).__name__}: {exc}")
+        # CHỈ cache kết quả thành công. Cache lỗi hạ tầng (hết credit, timeout, 5xx)
+        # sẽ đóng băng nó vĩnh viễn: nạp thêm credit rồi chạy lại vẫn ăn cache None.
+        if result.error:
+            return result
         self.cache[key] = {"score": result.score, "detail": result.detail, "error": result.error}
         return result
 
