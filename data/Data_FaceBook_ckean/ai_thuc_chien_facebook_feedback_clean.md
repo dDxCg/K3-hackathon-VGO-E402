@@ -1,3 +1,5 @@
+<!-- source: https://www.facebook.com/groups/2125430681651241 -->
+
 # Bộ FAQ và feedback cộng đồng về chương trình AI Thực chiến VinUni - Vingroup
 
 ## Phạm vi sử dụng
