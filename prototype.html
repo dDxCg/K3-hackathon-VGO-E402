@@ -603,7 +603,11 @@ main li::marker{color:var(--navy-500);font-weight:600}
 /* sources */
 .vc-sources{margin-top:10px}
 .vc-sources-label{font-size:11.5px;color:var(--text-400);margin-bottom:5px}
-.vc-chips{display:flex;flex-wrap:wrap;gap:6px}
+.vc-source-list{display:grid;gap:8px}
+.vc-source-item{padding-top:8px;border-top:1px solid var(--border)}
+.vc-source-item:first-child{padding-top:0;border-top:0}
+.vc-source-major{font-size:12.5px;font-weight:650;color:var(--text-600);line-height:1.45}
+.vc-source-minor{font-size:12px;color:var(--text-600);line-height:1.45;margin-top:2px}
 .vc-src{
   display:inline-flex;align-items:center;gap:5px;background:var(--bg-white);
   border:1px solid var(--border);border-radius:var(--r-pill);padding:4px 10px;
@@ -1744,6 +1748,11 @@ function escapeHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
                   .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+function safeUrl(url, image){
+  const value = String(url || '').trim();
+  const allowed = image ? /^(https?:|data:image\/)/i : /^(https?:|mailto:)/i;
+  return allowed.test(value) ? value : '#';
+}
 function deaccent(s){
   return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
                   .replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().trim();
@@ -1754,6 +1763,7 @@ function fmtTime(ts){
 }
 let _uid = 0;
 const uid = p => p + '_' + (++_uid) + '_' + Date.now().toString(36);
+const newSessionId = () => window.crypto && crypto.randomUUID ? crypto.randomUUID() : uid('session');
 const rand = (a,b) => a + Math.random()*(b-a);
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1822,9 +1832,9 @@ function inlineMd(t){
   s = s.replace(/\$\$([^$]+)\$\$/g, '<span class="vc-math block">$1</span>');
   s = s.replace(/\$([^$\n]+)\$/g, '<span class="vc-math">$1</span>');
   s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
-      (m,alt,src) => '<img src="'+src+'" alt="'+alt+'" class="vc-inline-img" style="border-radius:10px;margin:8px 0;cursor:zoom-in">');
+      (m,alt,src) => '<img src="'+safeUrl(src,true)+'" alt="'+alt+'" class="vc-inline-img" style="border-radius:10px;margin:8px 0;cursor:zoom-in">');
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
-      (m,txt,url) => '<a href="'+url+'" target="_blank" rel="noopener noreferrer">'+txt
+      (m,txt,url) => '<a href="'+safeUrl(url,false)+'" target="_blank" rel="noopener noreferrer">'+txt
         +'<svg class="ext" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg></a>');
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
@@ -1910,7 +1920,7 @@ function mdToHtml(src){
     // standalone image
     let im = ln.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
     if(im){
-      out.push('<figure class="vc-figure"><img src="'+im[2]+'" alt="'+escapeHtml(im[1])+'" data-zoom="1">'+
+      out.push('<figure class="vc-figure"><img src="'+safeUrl(im[2],true)+'" alt="'+escapeHtml(im[1])+'" data-zoom="1">'+
                (im[1] ? '<figcaption>'+escapeHtml(im[1])+'</figcaption>' : '')+'</figure>');
       i++; continue;
     }
@@ -2148,7 +2158,8 @@ const DEFAULT_CHIPS = ['Thông tin tuyển sinh','Chương trình AI','Điều k
    ============================================================ */
 const Memory = {
   turns: [], topics: [], profile:{name:null,email:null,phone:null,level:null},
-  lastIntent:null, startedAt:Date.now(), opened:false
+  lastIntent:null, startedAt:Date.now(), opened:false,
+  sessionId: newSessionId()
 };
 
 function pushTurn(role, text, intent, label){
@@ -2221,6 +2232,7 @@ const announce = $('#vcAnnounce');
 
 let stickToBottom = true;
 let streaming = null;   // {timer, cancel}
+let pendingRequest = null;
 let lead = null;        // {step, data}
 let pendingClear = false;
 
@@ -2279,10 +2291,14 @@ function mediaHtml(media){
 
 function sourcesHtml(sources){
   if(!sources || !sources.length) return '';
-  return '<div class="vc-sources"><div class="vc-sources-label">Nguồn tham khảo</div><div class="vc-chips">'+
-    sources.map(s => '<a class="vc-src" href="'+s.url+'" target="_blank" rel="noopener noreferrer">'+
+  sources = Array.from(new Map(sources.map(s => [[s.mucLon,s.mucNho,s.url].join('|'), s])).values());
+  return '<div class="vc-sources"><div class="vc-sources-label">Nguồn tham khảo</div><div class="vc-source-list">'+
+    sources.map(s => '<div class="vc-source-item">'+
+      (s.mucLon ? '<div class="vc-source-major">'+escapeHtml(s.mucLon)+'</div>' : '')+
+      (s.mucNho ? '<div class="vc-source-minor">'+escapeHtml(s.mucNho)+'</div>' : '')+
+      '<a class="vc-src" href="'+escapeHtml(safeUrl(s.url,false))+'" target="_blank" rel="noopener noreferrer">'+
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>'+
-      escapeHtml(s.label)+'</a>').join('')+'</div></div>';
+      escapeHtml(s.url)+'</a></div>').join('')+'</div></div>';
 }
 
 const ACT_ICONS = {
@@ -2303,7 +2319,7 @@ function actionsHtml(){
   const tts = ('speechSynthesis' in window) ? act('tts','Đọc to câu trả lời') : '';
   return '<div class="vc-actions">'+
     act('up','Câu trả lời hữu ích','up')+act('down','Câu trả lời chưa tốt','down')+
-    act('copy','Sao chép câu trả lời')+tts+act('share','Chia sẻ')+act('redo','Tạo lại câu trả lời')+
+    act('copy','Sao chép câu trả lời')+tts+act('share','Chia sẻ')+
     '</div>';
 }
 function expandHtml(){
@@ -2325,6 +2341,7 @@ function addBotMsg(md, opts){
   wrap.className = 'vc-msg vc-msg--bot' + (sameCluster ? ' no-avatar' : '');
   wrap.dataset.md = md;
   wrap.dataset.intent = opts.intent || '';
+  wrap.dataset.question = opts.question || '';
   wrap.innerHTML =
     (sameCluster ? '' : '<div class="vc-avatar" aria-hidden="true">'+AV_SVG+'</div>') +
     '<div class="vc-botwrap"><div class="vc-bubble">'+
@@ -2389,9 +2406,18 @@ function setStreamingUI(on){
   sendBtn.setAttribute('aria-label', on ? 'Dừng tạo câu trả lời' : 'Gửi câu hỏi');
 }
 function stopStreaming(){
-  if(!streaming) return;
-  clearTimeout(streaming.timer);
-  streaming.stop();
+  if(pendingRequest){
+    pendingRequest.abort();
+    pendingRequest = null;
+    hideTyping();
+    setStreamingUI(false);
+    toast('Đã dừng yêu cầu');
+    return;
+  }
+  if(streaming){
+    clearTimeout(streaming.timer);
+    streaming.stop();
+  }
 }
 stopBtn.addEventListener('click', stopStreaming);
 
@@ -2559,29 +2585,19 @@ function botSay(md, opts){
   setTimeout(() => {
     hideTyping();
     addBotMsg(md, { stream: !opts.noStream, media: opts.media, sources: opts.sources,
-                    intent: opts.intent, noActions: opts.noActions });
+                    intent: opts.intent, noActions: opts.noActions, question:opts.question });
     pushTurn('bot', md, opts.intent, opts.label);
     setChips(opts.chips);
   }, delay);
 }
 
-function submit(text){
+async function submit(text){
   text = (text || '').trim();
   if(!text) return;
   if(streaming){ stopStreaming(); }
 
-  // đang trong luồng lead
-  if(lead){
-    addUserMsg(text);
-    pushTurn('user', text, 'lead', 'Đăng ký');
-    setTimeout(() => handleLeadInput(text), 260);
-    resetInput();
-    return;
-  }
-
   const m = matchIntent(text);
-  const kb = m.kb || KB.find(k => k.intent === m.intent);
-  const label = m.intent === 'recall' ? 'Lịch sử' : (kb ? kb.label : 'Khác');
+  const label = m.intent === 'recall' ? 'Lịch sử' : 'Tư vấn tuyển sinh';
 
   addUserMsg(text);
   pushTurn('user', text, m.intent, label);
@@ -2598,39 +2614,47 @@ function submit(text){
     botSay(r.md, { intent:'recall_one', label:'Lịch sử', chips:['Tôi đã hỏi những gì?'] });
     return;
   }
-  // --- lead ---
-  if(m.intent === 'lead'){
-    showTyping();
-    setTimeout(() => { hideTyping(); startLead(); }, rand(400,700));
-    return;
+
+  showTyping();
+  const controller = new AbortController();
+  pendingRequest = controller;
+  setStreamingUI(true);
+  try{
+    const response = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({session_id:Memory.sessionId, message:text}),
+      signal:controller.signal
+    });
+    const payload = await response.json().catch(() => ({}));
+    if(!response.ok) throw new Error(payload.error || 'API trả lỗi '+response.status);
+    hideTyping();
+    pendingRequest = null;
+    setStreamingUI(false);
+    const sources = (payload.sources || []).map(s => ({
+      mucLon:s.muc_lon || '',
+      mucNho:s.muc_nho || '',
+      url:s.source_link
+    }));
+    addBotMsg(payload.answer, {
+      stream:true,
+      sources,
+      intent:payload.path || 'chat',
+      question:text
+    });
+    pushTurn('bot', payload.answer, payload.path || 'chat', label, {sources});
+    setChips(payload.suggestions || DEFAULT_CHIPS);
+  }catch(err){
+    hideTyping();
+    pendingRequest = null;
+    setStreamingUI(false);
+    if(err.name === 'AbortError') return;
+    const md = '**Không kết nối được chatbot.**\n\n'+err.message+
+      '\n\nKiểm tra app đang chạy bằng `python -m src.app` rồi thử lại.';
+    addBotMsg(md, {stream:false, intent:'error', question:text});
+    pushTurn('bot', md, 'error', 'Lỗi kết nối');
+    setChips(DEFAULT_CHIPS);
   }
-  // --- fallback ---
-  if(m.intent === 'fallback'){
-    botSay(
-`Xin lỗi, mình chưa hiểu rõ câu hỏi này 😅
-
-Mình có thể giúp bạn về: **điều kiện dự tuyển**, **hồ sơ**, **lịch trình**, **học phí – học bổng**, **nội dung học** và **cơ hội việc làm**.
-
-Bạn thử hỏi lại cụ thể hơn, hoặc để mình kết nối với tư vấn viên nhé?`,
-      { intent:'fallback', label:'Khác', chips:['Điều kiện dự tuyển?','Học phí bao nhiêu?','Gặp tư vấn viên'] });
-    return;
-  }
-
-  // --- KB thường ---
-  let md = kb.answer;
-  const repeated = Memory.turns.some(t => t.role === 'bot' && t.intent === kb.intent);
-  if(repeated) md = 'Như đã đề cập ở trên, ' + md.replace(/^##\s*[^\n]*\n+/, '');
-  if(m.followup) md = '*(Hiểu là bạn đang hỏi tiếp về ' + kb.label + ')*\n\n' + md;
-  if(Memory.profile.name && !repeated) md = 'Chào ' + Memory.profile.name + ', ' + md.charAt(0).toLowerCase() + md.slice(1);
-
-  const chips = (kb.followups || []).slice();
-
-  // nudge lead sau ≥3 chủ đề
-  const nudge = Memory.topics.length >= 3 && !Memory.profile.email;
-  if(nudge) md += '\n\n---\n\nBạn đang quan tâm khá nhiều nội dung rồi — để lại thông tin để tư vấn viên hỗ trợ sâu hơn nhé?';
-  if(nudge && !chips.includes('Để lại thông tin')) chips.unshift('Để lại thông tin');
-
-  botSay(md, { intent:kb.intent, label:kb.label, media:kb.media, sources:kb.sources, chips });
 }
 
 function resetInput(){
@@ -2781,13 +2805,13 @@ input.addEventListener('input', () => {
   } else countEl.hidden = true;
 });
 input.addEventListener('keydown', e => {
-  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); if(!streaming) submit(input.value); }
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); if(!streaming && !pendingRequest) submit(input.value); }
   if(e.key === 'ArrowUp' && !input.value){
     const last = userTurns().slice(-1)[0];
     if(last){ input.value = last.text; autoGrow(); sendBtn.disabled = false; }
   }
 });
-sendBtn.addEventListener('click', () => { streaming ? stopStreaming() : submit(input.value); });
+sendBtn.addEventListener('click', () => { (streaming || pendingRequest) ? stopStreaming() : submit(input.value); });
 
 /* --- delegated actions inside thread --- */
 thread.addEventListener('click', e => {
@@ -2889,6 +2913,7 @@ function doClear(){
   Memory.turns = []; Memory.topics = []; Memory.lastIntent = null;
   Memory.profile = { name:null, email:null, phone:null, level:null };
   Memory.opened = true;
+  Memory.sessionId = newSessionId();
   lead = null;
   thread.innerHTML = '';
   botSay(GREETING, { intent:'greeting', label:'Chào hỏi', chips:DEFAULT_CHIPS });

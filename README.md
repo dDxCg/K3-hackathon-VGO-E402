@@ -5,6 +5,15 @@
 - Thời lượng: **1,5 ngày** (một ngày build + một buổi demo)
 - Nhóm: **4-5 người** · zone tối đa 5 nhóm · thi theo lớp
 
+## Thành viên
+
+| Họ và tên | Mã sinh viên |
+|---|---|
+| Lương Thanh Trang | 2A202601363 |
+| Nguyễn Thanh Hoàn | 2A202601201 |
+| Đỗ Đức Cường | 2A202601455 |
+| Đỗ Tuấn Kiệt | 2A202601335 |
+
 ## Bắt đầu từ đâu?
 
 1. Đọc **`01-de-bai.md`** để chọn hướng và hiểu tiêu chí.
@@ -20,6 +29,81 @@
 | `04-rubric.md` | Rubric 100 điểm (25 nộp checkpoint + 75 chấm bài) + checklist xác minh 6 mốc |
 | `data/` | Dữ liệu thật đã ẩn danh: chatlog VLearn tutor + 6 transcript bài giảng bản sạch — dùng để tìm bằng chứng và xây golden set |
 | `tham-khao/` | JTBD Playbook (PDF) + worksheet JTBD đầy đủ — đọc khi muốn đào sâu |
+
+## Cấu trúc repo hiện tại
+
+```
+VGO-K3-AI-Product-Hackathon/
+├── data/                          ← toàn bộ dữ liệu
+│   ├── vlearn-pack/               ← data pack gốc từ ban tổ chức
+│   │   ├── chatlog/               ← chatlog VLearn tutor (CSV + data dictionary)
+│   │   └── transcript/            ← 6 transcript bài giảng bản sạch
+│   ├── web/                       ← data crawl từ web
+│   │   ├── _raw/                  ← bản thô sau crawl
+│   │   └── _clean/                ← bản đã làm sạch (dùng bản này)
+│   └── Data_FaceBook_ckean/       ← feedback Facebook đã làm sạch
+├── src/
+│   ├── crawl/                     ← script crawl dữ liệu
+│   ├── chatbot/                   ← tầng chatbot / orchestration
+│   ├── rag/                       ← indexing + retrieval
+│   └── tools/                     ← tool cho agent gọi
+├── docs/                          ← tài liệu nội bộ nhóm
+└── tham-khao/                     ← JTBD Playbook + worksheet
+```
+
+## Chạy web demo
+
+Web demo dùng `prototype.html` làm giao diện; `src/app.py` phục vụ trang và endpoint
+`POST /api/chat`. Mỗi câu hỏi đi qua RAG thật trong `src/rag`, chatbot trong
+`src/chatbot`, rồi đính nguồn hoặc chuyển kênh tuyển sinh bằng `src/tools`.
+
+```powershell
+python -m src.app
+```
+
+Mở `http://127.0.0.1:8000`. Kiểm tra server:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/health
+```
+
+Yêu cầu: `.env` có `EMBEDDING_API`, `EMBEDDING_MODEL`, `OPENAI_API`,
+`OPENAI_MODEL`; ChromaDB đã có dữ liệu tại `src/rag/chroma_db`.
+
+Query embedding mặc định chạy local bằng model tại
+`models/intfloat-multilingual-e5-large`. Cấu hình:
+
+```env
+EMBEDDING_QUERY_BACKEND=local
+LOCAL_EMBEDDING_MODEL_PATH=models/intfloat-multilingual-e5-large
+LOCAL_EMBEDDING_DEVICE=cpu
+```
+
+Đổi `EMBEDDING_QUERY_BACKEND=api` nếu cần quay lại OpenRouter embedding.
+
+Tải model lần đầu (~2,1 GB):
+
+```powershell
+python -m src.rag.download_model
+```
+
+App nạp model một lần khi khởi động. Trên CPU hiện tại, warmup khoảng 10–15 giây;
+mỗi query embedding sau đó khoảng 0,2–0,4 giây.
+
+Benchmark cùng 10 câu hỏi giữa local và OpenRouter, xuất JSON + Markdown:
+
+```powershell
+python -m eval.benchmark_embedding --backend both
+```
+
+Kết quả nằm trong `eval/results/embedding-benchmark.json` và `.md`. Báo cáo tách
+riêng model load, embedding, Chroma query và tổng retrieval; không trộn thời gian chat LLM.
+
+Chạy test offline:
+
+```powershell
+python -m pytest -q
+```
 
 ## Lịch — 6 mốc
 
