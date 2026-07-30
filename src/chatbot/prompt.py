@@ -25,6 +25,15 @@ class ToolSignature:
     signature: str
 
 
+def render_policy(threshold: float, template: str = "admission_policy.md") -> str:
+    """Chính sách nghiệp vụ nằm ở `prompts/`, không hardcode trong file Python.
+
+    Sửa câu chữ chính sách là việc của người viết prompt, không nên phải mở code.
+    `threshold` đổ vào để con số trong chính sách luôn khớp ngưỡng thật đang chạy.
+    """
+    return _env.get_template(template).render(threshold=threshold).strip()
+
+
 def render_system_prompt(
     tool_signatures: Sequence[Any] | None = None,
     retrieved: Sequence[Any] | None = None,

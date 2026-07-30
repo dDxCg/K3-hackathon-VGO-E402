@@ -13,7 +13,7 @@ from typing import Any, Callable
 from .types import Chunk
 
 # Ngưỡng chốt trong docs/design-agent-tools.md §4: dưới mức này coi là không có căn cứ.
-NO_GROUNDING_THRESHOLD = 0.7
+NO_GROUNDING_THRESHOLD = 0.85
 
 # docs/rag-system.md §5.1 dùng `loai_nguon`; tool dùng `source_type`.
 SOURCE_TYPE_BY_LOAI_NGUON = {
