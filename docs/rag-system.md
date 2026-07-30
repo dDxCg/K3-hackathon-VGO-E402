@@ -10,7 +10,7 @@ flowchart LR
     B[Web clean Markdown] --> C
     C --> D[chunks.json]
     D --> E[embedding.py]
-    F[OpenRouter Embeddings API] --> E
+    F[multilingual-e5-large local] --> E
     E --> G[(ChromaDB)]
     H[Câu hỏi người dùng] --> I[retrieval.py]
     F --> I
@@ -23,7 +23,7 @@ Luồng chính:
 1. `chunking.py` đọc tài liệu Markdown trong hai nguồn Facebook và Web.
 2. Tài liệu được chia theo cây đề mục, từ mục lớn đến mục nhỏ và mục con.
 3. Các chunk được ghi vào `src/rag/chunks.json`.
-4. `embedding.py` đọc từng chunk, gọi Embeddings API và lưu vector vào ChromaDB.
+4. `embedding.py` đọc từng chunk, tạo vector bằng model local và lưu vào ChromaDB.
 5. `retrieval.py` embedding câu hỏi người dùng bằng cùng model.
 6. ChromaDB tìm các vector gần nhất bằng cosine similarity.
 7. Hệ thống trả về mặc định 5 chunk phù hợp nhất, kèm metadata có giá trị.
@@ -45,6 +45,7 @@ VGO-K3-AI-Product-Hackathon/
     └── rag/
         ├── chunking.py
         ├── chunks.json
+        ├── download_model.py
         ├── embedding.py
         ├── retrieval.py
         └── chroma_db/
@@ -58,7 +59,7 @@ Vai trò từng file:
 | `data/web/_clean` | Dữ liệu website/PDF đã làm sạch dưới dạng Markdown |
 | `src/rag/chunking.py` | Phân tích cấu trúc và tạo chunks |
 | `src/rag/chunks.json` | Kết quả chunk trung gian, dùng để kiểm tra và embedding |
-| `src/rag/embedding.py` | Gọi API embedding và upsert vào ChromaDB |
+| `src/rag/embedding.py` | Đọc `chunks.json`, nạp E5-large local, encode document/query và upsert vào ChromaDB |
 | `src/rag/retrieval.py` | Embedding câu hỏi và tìm top chunks |
 | `src/rag/chroma_db` | Vector database lưu cục bộ |
 
@@ -235,25 +236,22 @@ Các field đề mục có thể là `null` nếu tài liệu không có cấp t
 
 ### 6.1. Cấu hình
 
-`embedding.py` đọc cấu hình từ `.env`:
+Model được cố định trong code là `intfloat/multilingual-e5-large`. `.env` chỉ
+cấu hình đường dẫn local và tham số chạy:
 
 ```env
-EMBEDDING_API=<OPENROUTER_API_KEY>
-EMBEDDING_MODEL=intfloat/multilingual-e5-large
-EMBEDDING_BASE_URL=https://openrouter.ai/api/v1
+LOCAL_EMBEDDING_MODEL_PATH=models/intfloat-multilingual-e5-large
+LOCAL_EMBEDDING_DEVICE=cpu
 EMBEDDING_BATCH_SIZE=8
-EMBEDDING_TIMEOUT_SECONDS=60
-EMBEDDING_MAX_RETRIES=4
 EMBEDDING_DOCUMENT_PREFIX=passage:
+EMBEDDING_QUERY_PREFIX=query:
 
 CHUNKS_FILE=src/rag/chunks.json
 CHROMA_DIR=src/rag/chroma_db
 CHROMA_COLLECTION=ai_thuc_chien_chunks
 ```
 
-Không ghi API key thật vào tài liệu hoặc commit Git. File `.env` đã được `.gitignore` bỏ qua.
-
-Hai biến sau đang dành cho bước sinh câu trả lời bằng LLM, chưa được sử dụng trong chunking, embedding hoặc retrieval:
+Hai biến sau chỉ dành cho bước sinh câu trả lời bằng LLM; RAG không đọc chúng:
 
 ```env
 OPENAI_API=<OPENROUTER_API_KEY>
@@ -265,10 +263,9 @@ OPENAI_MODEL=openai/gpt-4o-mini
 1. Đọc và kiểm tra schema `chunks.json`.
 2. Kiểm tra ID không trùng và content không rỗng.
 3. Thêm prefix `passage:` trước content gửi tới model E5.
-4. Gửi nhiều chunk theo batch tới endpoint `/embeddings`.
-5. Kiểm tra số vector, kiểu số và số chiều đồng nhất.
+4. Encode nhiều chunk theo batch ngay trên CPU/GPU local.
+5. Kiểm tra số vector và bắt buộc đúng 1.024 chiều.
 6. Upsert ID, content, vector và metadata vào ChromaDB.
-7. Retry khi gặp timeout, rate limit hoặc lỗi server tạm thời.
 
 Model hiện tại:
 
@@ -335,10 +332,10 @@ Phân bố theo nguồn:
 ### 8.1. Luồng truy xuất
 
 1. Nhận câu hỏi người dùng.
-2. Đọc `EMBEDDING_MODEL` từ `.env`.
-3. Kiểm tra model trong `.env` trùng model của collection.
+2. Dùng model cố định `intfloat/multilingual-e5-large`.
+3. Kiểm tra model cố định trùng metadata của collection.
 4. Thêm prefix `query:` trước câu hỏi.
-5. Gọi API để tạo vector câu hỏi.
+5. Dùng `multilingual-e5-large` tải tại `models/` để tạo vector câu hỏi trên máy local.
 6. Gửi vector tới ChromaDB.
 7. Chroma tìm top 5 theo cosine distance.
 8. Chuyển distance thành similarity:
@@ -390,7 +387,7 @@ python src\rag\chunking.py
 python src\rag\chunking.py --max-chars 1500
 ```
 
-### 9.2. Kiểm tra chunks, không gọi API
+### 9.2. Kiểm tra chunks, không nạp model
 
 ```powershell
 python src\rag\embedding.py --validate-only
@@ -434,6 +431,22 @@ Output JSON một dòng:
 python src\rag\retrieval.py "Câu hỏi" --compact
 ```
 
+Tải model embedding local:
+
+```powershell
+python -m src.rag.download_model
+```
+
+Cấu hình:
+
+```env
+LOCAL_EMBEDDING_MODEL_PATH=models/intfloat-multilingual-e5-large
+LOCAL_EMBEDDING_DEVICE=cpu
+```
+
+Document embedding và query embedding đều chạy local bằng cùng model; không có
+backend embedding thứ hai.
+
 ## 10. Quy trình cập nhật dữ liệu
 
 Khi thêm hoặc sửa tài liệu nguồn:
@@ -459,17 +472,16 @@ Không dùng `embedding.py` không có `--recreate` sau khi xóa hoặc thay đ�
 
 ## 11. Kiểm tra và xử lý lỗi
 
-### API chạy lâu nhưng chưa có kết quả
+### Model local chạy chậm hoặc thiếu bộ nhớ
 
 - `embedding.py` in log sau khi một batch được lưu.
-- `retrieval.py` in trạng thái trước khi gọi API.
-- Có thể giảm `EMBEDDING_BATCH_SIZE` hoặc tăng `EMBEDDING_TIMEOUT_SECONDS` nếu API chậm.
+- `retrieval.py` in trạng thái trước khi encode local.
+- Có thể giảm `EMBEDDING_BATCH_SIZE` nếu máy thiếu RAM/VRAM.
 
 Ví dụ:
 
 ```env
 EMBEDDING_BATCH_SIZE=4
-EMBEDDING_TIMEOUT_SECONDS=180
 ```
 
 ### Model không trùng
@@ -498,10 +510,10 @@ Thêm dòng sau vào đầu tài liệu:
 
 ## 12. Nguyên tắc nhất quán
 
-- Document và query phải dùng cùng `EMBEDDING_MODEL`.
+- Document và query phải dùng cùng model cố định `intfloat/multilingual-e5-large`.
 - Document dùng prefix `passage:`; câu hỏi dùng prefix `query:`.
 - Collection phải dùng cosine distance.
 - ID trong ChromaDB phải trùng ID trong `chunks.json`.
 - Content trong ChromaDB phải giống content trong `chunks.json`.
-- Không đưa API key vào code, JSON, metadata hoặc Git.
+- Embedding không dùng API key và không gửi document/query ra dịch vụ ngoài.
 - Mọi kết quả phải giữ `source_link` để truy xuất nguồn.

@@ -18,6 +18,8 @@ class Settings:
     base_url: str
     temperature: float
     max_tokens: int
+    timeout_seconds: float = 60.0
+    max_retries: int = 2
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -30,4 +32,6 @@ class Settings:
             base_url=os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1"),
             temperature=float(os.getenv("OPENAI_TEMPERATURE", "0.3")),
             max_tokens=int(os.getenv("OPENAI_MAX_TOKENS", "1024")),
+            timeout_seconds=float(os.getenv("OPENAI_TIMEOUT_SECONDS", "60")),
+            max_retries=int(os.getenv("OPENAI_MAX_RETRIES", "2")),
         )

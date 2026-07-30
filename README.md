@@ -5,6 +5,15 @@
 - Thời lượng: **1,5 ngày** (một ngày build + một buổi demo)
 - Nhóm: **4-5 người** · zone tối đa 5 nhóm · thi theo lớp
 
+## Thành viên
+
+| Họ và tên | Mã sinh viên |
+|---|---|
+| Lương Thanh Trang | 2A202601363 |
+| Nguyễn Thanh Hoàn | 2A202601201 |
+| Đỗ Đức Cường | 2A202601455 |
+| Đỗ Tuấn Kiệt | 2A202601335 |
+
 ## Bắt đầu từ đâu?
 
 1. Đọc **`01-de-bai.md`** để chọn hướng và hiểu tiêu chí.
@@ -38,8 +47,69 @@ VGO-K3-AI-Product-Hackathon/
 │   ├── chatbot/                   ← tầng chatbot / orchestration
 │   ├── rag/                       ← indexing + retrieval
 │   └── tools/                     ← tool cho agent gọi
+├── ui/                            ← prototype.html và toàn bộ asset giao diện
 ├── docs/                          ← tài liệu nội bộ nhóm
 └── tham-khao/                     ← JTBD Playbook + worksheet
+```
+
+## Chạy web demo
+
+Web demo dùng `ui/prototype.html` làm giao diện; `src/app.py` phục vụ trang, asset trong `ui/` và endpoint
+`POST /api/chat`. Mỗi câu hỏi đi qua RAG thật trong `src/rag`, chatbot trong
+`src/chatbot`, rồi đính nguồn hoặc chuyển kênh tuyển sinh bằng `src/tools`.
+
+```powershell
+python -m src.app
+```
+
+`ui/prototype.html` gọi `POST /api/chat` để chat và `POST /api/reset` khi xóa hội
+thoại. Asset giao diện được đặt tập trung trong `ui/` và phục vụ cùng origin.
+
+Mở `http://127.0.0.1:8000`. Kiểm tra server:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/health
+```
+
+Yêu cầu: `.env` có `OPENAI_API`, `OPENAI_MODEL`; model embedding local đã tải
+và ChromaDB đã có dữ liệu tại `src/rag/chroma_db`.
+
+Toàn bộ document/query embedding dùng duy nhất `intfloat/multilingual-e5-large`
+từ `models/intfloat-multilingual-e5-large`. Cấu hình local:
+
+Toàn bộ logic nằm trong một file `src/rag/embedding.py`: đọc `chunks.json`,
+thêm prefix E5, encode local và ghi vector vào ChromaDB.
+
+```env
+LOCAL_EMBEDDING_MODEL_PATH=models/intfloat-multilingual-e5-large
+LOCAL_EMBEDDING_DEVICE=cpu
+EMBEDDING_BATCH_SIZE=8
+EMBEDDING_DOCUMENT_PREFIX=passage:
+EMBEDDING_QUERY_PREFIX=query:
+```
+
+Tải model lần đầu (~2,1 GB):
+
+```powershell
+python -m src.rag.download_model
+```
+
+App nạp model một lần khi khởi động. Trên CPU hiện tại, warmup khoảng 10–15 giây;
+mỗi query embedding sau đó khoảng 0,2–0,4 giây.
+
+Benchmark local với 10 câu hỏi, xuất JSON + Markdown:
+
+```powershell
+python -m eval.benchmark_embedding
+```
+
+Kết quả nằm trong `eval/results/embedding-benchmark.json` và `.md`. Báo cáo tách
+riêng model load, embedding, Chroma query và tổng retrieval; không trộn thời gian chat LLM.
+
+Chạy test offline:
+
+```powershell
+python -m pytest -q
 ```
 
 ## Lịch — 6 mốc

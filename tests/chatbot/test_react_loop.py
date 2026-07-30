@@ -1,15 +1,17 @@
 """Vòng phản hồi ReAct — mọi nhánh, chạy trên phản hồi kịch bản hoá."""
 
 from src.chatbot.chatbot import Chatbot
-from src.chatbot.mock.tools import ToolRegistry
+from src.chatbot.types import ToolRegistry
 from src.chatbot.react import ReActAgent
 
 ACT = 'Thought: can tra tai lieu\nAction: search_docs\nAction Input: {"query": "CP3"}'
 FINAL = "Thought: du du kien\nFinal Answer: CP3 luc 16:00 ngay 1."
 
 
-def agent(registry: ToolRegistry, bot: Chatbot, max_steps: int = 4) -> ReActAgent:
-    return ReActAgent(registry, chatbot=bot, max_steps=max_steps)
+def agent(
+    registry: ToolRegistry, bot: Chatbot, max_steps: int = 4, prefetch_rag: bool = False
+) -> ReActAgent:
+    return ReActAgent(registry, chatbot=bot, max_steps=max_steps, prefetch_rag=prefetch_rag)
 
 
 def test_final_answer_ngay_lap_tuc(registry, bare_bot, script):
@@ -118,20 +120,31 @@ def test_scratchpad_tich_luy_observation(registry, bare_bot, script):
     assert prefill.endswith("Thought:")
 
 
-def test_rag_pre_retrieve_vao_system_prompt(registry, bot, script):
-    """Agent dùng RAG trước, tool chỉ bổ sung."""
+def test_prefetch_mac_dinh_la_tat(registry, bot):
+    assert ReActAgent(registry, chatbot=bot).prefetch_rag is False
+
+
+def test_mac_dinh_khong_pre_retrieve(registry, bot, script):
+    """Agent có search_docs thì không đổ sẵn chunk vào prompt — tránh embed 2 lần."""
     llm = script(bot, FINAL)
-    res = agent(registry, bot).run("CP3 luc 16:00 ngay 1")
-    assert res.retrieved and res.retrieved[0].source == "rubric.md"
+    agent(registry, bot).run("CP3 luc 16:00 ngay 1")
     system = llm.calls[0][0]
     assert system["role"] == "system"
-    assert "Ngữ cảnh truy xuất" in system["content"]
-    assert "CP3 luc 16:00" in system["content"]
+    assert "## Ngữ cảnh truy xuất" not in system["content"]
+    assert bot.last_retrieved == []  # retriever chưa hề bị gọi
+
+
+def test_bat_prefetch_thi_do_chunk_vao_prompt(registry, bot, script):
+    """Bật lại cho trường hợp registry không có tool tìm kiếm."""
+    llm = script(bot, FINAL)
+    res = agent(registry, bot, prefetch_rag=True).run("CP3 luc 16:00 ngay 1")
+    assert res.retrieved and res.retrieved[0].source == "rubric.md"
+    assert "Ngữ cảnh truy xuất" in llm.calls[0][0]["content"]
 
 
 def test_khong_co_rag_thi_retrieved_rong(registry, bare_bot, script):
     script(bare_bot, FINAL)
-    assert agent(registry, bare_bot).run("CP3?").retrieved == []
+    assert agent(registry, bare_bot, prefetch_rag=True).run("CP3?").retrieved == []
 
 
 def test_tool_signature_tu_registry_vao_prompt(registry, bare_bot, script):

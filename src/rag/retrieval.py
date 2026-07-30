@@ -1,12 +1,4 @@
-"""Tìm top chunks gần câu hỏi nhất bằng cosine similarity.
-
-Ví dụ:
-
-    python src/rag/retrieval.py "Chương trình học trong bao lâu?"
-
-Nếu không truyền câu hỏi, script sẽ hỏi trên terminal. Kết quả trả về dạng JSON,
-mặc định gồm 5 chunks có cosine similarity cao nhất.
-"""
+"""Tìm top chunks bằng cosine similarity và E5-large local."""
 
 from __future__ import annotations
 
@@ -14,13 +6,13 @@ import argparse
 import json
 import os
 import sys
-from dataclasses import replace
 from pathlib import Path
 from typing import Any, Sequence
 
-import requests
-
-import embedding
+try:
+    from . import embedding
+except ImportError:  # Cho phép chạy trực tiếp: python src/rag/retrieval.py
+    import embedding  # type: ignore[no-redef]
 
 
 RAG_DIR = Path(__file__).resolve().parent
@@ -35,8 +27,6 @@ class RetrievalError(RuntimeError):
 
 
 def clean_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
-    """Bỏ metadata null/rỗng khỏi kết quả trả về."""
-
     if not metadata:
         return {}
     return {
@@ -46,19 +36,13 @@ def clean_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
-def query_embedding(
-    question: str,
-    config: embedding.EmbeddingConfig,
-    session: requests.Session,
-) -> list[float]:
-    """Embedding câu hỏi với cùng model, dùng prefix query của E5."""
+def query_embedding(question: str) -> list[float]:
+    """Embedding câu hỏi bằng model local duy nhất của hệ thống."""
 
-    query_prefix = os.getenv("EMBEDDING_QUERY_PREFIX", "query:").strip()
-    query_config = replace(config, document_prefix=query_prefix)
-    vectors = embedding.request_embeddings([question], query_config, session)
-    if len(vectors) != 1:
-        raise RetrievalError("Embedding API không trả đúng một vector cho câu hỏi")
-    return vectors[0]
+    prefix = os.getenv(
+        "EMBEDDING_QUERY_PREFIX", embedding.DEFAULT_QUERY_PREFIX
+    ).strip()
+    return embedding.embed_query(question, prefix=prefix)
 
 
 def open_existing_collection(
@@ -92,10 +76,9 @@ def open_existing_collection(
     stored_model = (collection.metadata or {}).get("embedding_model")
     if stored_model and stored_model != expected_model:
         raise RetrievalError(
-            f"Collection dùng model '{stored_model}', nhưng .env dùng "
+            f"Collection dùng model '{stored_model}', nhưng RAG local cố định dùng "
             f"'{expected_model}'"
         )
-
     hnsw_config = (collection.configuration or {}).get("hnsw") or {}
     if hnsw_config.get("space") != "cosine":
         raise RetrievalError("Collection không được cấu hình cosine distance")
@@ -109,34 +92,28 @@ def format_results(
     model: str,
     raw_results: dict[str, Any],
 ) -> dict[str, Any]:
-    """Đổi kết quả Chroma thành JSON dễ dùng, không chứa metadata null."""
-
     ids: Sequence[str] = (raw_results.get("ids") or [[]])[0]
     documents: Sequence[str] = (raw_results.get("documents") or [[]])[0]
     metadatas: Sequence[dict[str, Any] | None] = (
         raw_results.get("metadatas") or [[]]
     )[0]
     distances: Sequence[float] = (raw_results.get("distances") or [[]])[0]
-
     if not (len(ids) == len(documents) == len(metadatas) == len(distances)):
         raise RetrievalError("Chroma trả số lượng field không đồng nhất")
 
     results: list[dict[str, Any]] = []
     for rank, (chunk_id, content, metadata, distance) in enumerate(
-        zip(ids, documents, metadatas, distances),
-        start=1,
+        zip(ids, documents, metadatas, distances), start=1
     ):
-        similarity = 1.0 - float(distance)
         results.append(
             {
                 "rank": rank,
                 "id": chunk_id,
-                "cosine_similarity": round(similarity, 6),
+                "cosine_similarity": round(1.0 - float(distance), 6),
                 "content": content,
                 "metadata": clean_metadata(metadata),
             }
         )
-
     return {
         "question": question,
         "embedding_model": model,
@@ -152,7 +129,7 @@ def retrieve(
     chroma_dir: Path | None = None,
     collection_name: str | None = None,
 ) -> dict[str, Any]:
-    """Embedding câu hỏi và lấy top_k chunks theo cosine similarity."""
+    """Embedding local câu hỏi và lấy top_k chunks theo cosine similarity."""
 
     question = question.strip()
     if not question:
@@ -163,8 +140,7 @@ def retrieve(
     embedding.load_env_file(env_file)
     config = embedding.load_config(env_file)
     resolved_chroma_dir = embedding.resolve_project_path(
-        chroma_dir or os.getenv("CHROMA_DIR", ""),
-        DEFAULT_CHROMA_DIR,
+        chroma_dir or os.getenv("CHROMA_DIR", ""), DEFAULT_CHROMA_DIR
     )
     resolved_collection_name = (
         collection_name
@@ -178,10 +154,8 @@ def retrieve(
     )
 
     result_count = min(top_k, collection.count())
-    print("Đang tạo embedding cho câu hỏi...", file=sys.stderr, flush=True)
-    with requests.Session() as session:
-        vector = query_embedding(question, config, session)
-
+    print("Đang tạo embedding local cho câu hỏi...", file=sys.stderr, flush=True)
+    vector = query_embedding(question)
     print("Đang tìm chunks gần nhất...", file=sys.stderr, flush=True)
     raw_results = collection.query(
         query_embeddings=[vector],
@@ -193,7 +167,7 @@ def retrieve(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Tìm top chunks bằng cosine similarity."
+        description="Tìm top chunks bằng multilingual-e5-large local."
     )
     parser.add_argument(
         "question",
@@ -217,12 +191,8 @@ def main() -> None:
         sys.stdout.reconfigure(encoding="utf-8")
     if hasattr(sys.stderr, "reconfigure"):
         sys.stderr.reconfigure(encoding="utf-8")
-
     args = parse_args()
-    question = args.question
-    if question is None:
-        question = input("Nhập câu hỏi: ")
-
+    question = args.question if args.question is not None else input("Nhập câu hỏi: ")
     payload = retrieve(
         question=question,
         top_k=args.top_k,
@@ -245,7 +215,7 @@ if __name__ == "__main__":
     except (
         RetrievalError,
         embedding.ConfigurationError,
-        embedding.EmbeddingAPIError,
+        embedding.LocalEmbeddingError,
         FileNotFoundError,
         ValueError,
     ) as exc:

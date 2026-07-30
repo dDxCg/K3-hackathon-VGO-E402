@@ -37,6 +37,16 @@ COMMUNITY_WARNING = (
 )
 
 
+def _display_label(source_url: str) -> str:
+    """Chấp nhận metadata cũ có/không có dấu gạch chéo cuối URL."""
+    return (
+        DISPLAY_LABELS.get(source_url)
+        or DISPLAY_LABELS.get(source_url.rstrip("/"))
+        or DISPLAY_LABELS.get(f"{source_url.rstrip('/')}/")
+        or source_url
+    )
+
+
 @dataclass
 class SourceMeta:
     source_type: SourceType
@@ -75,7 +85,7 @@ def build_source_registry() -> dict[str, SourceMeta]:
             registry[file_path.stem] = SourceMeta(
                 source_type=source_type,
                 source_url=source_url,
-                label=DISPLAY_LABELS.get(source_url, source_url),
+                label=_display_label(source_url),
             )
     return registry
 
@@ -84,7 +94,7 @@ def attach_source_link(chunk_refs: list[ChunkRef]) -> list[dict]:
     """Format nguồn cho từng chunk đã dùng để trả lời — không gộp link khác source_type lại với nhau."""
     attachments = []
     for chunk in chunk_refs:
-        label = DISPLAY_LABELS.get(chunk.source_url, chunk.source_url)
+        label = _display_label(chunk.source_url)
         attachment = {
             "chunk_id": chunk.chunk_id,
             "source_type": chunk.source_type,
