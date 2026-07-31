@@ -440,7 +440,7 @@ main li::marker{color:var(--navy-500);font-weight:600}
   gap:10px;padding:0 8px 0 14px;color:var(--neutral-white);position:relative;
 }
 .vc-head-avatar{width:36px;height:36px;border-radius:50%;background:var(--neutral-white);display:grid;place-items:center;flex:0 0 auto}
-.vc-head-avatar svg{width:22px;height:22px}
+.vc-head-avatar img{display:block;width:26px;height:26px;object-fit:contain}
 .vc-head-txt{flex:1;min-width:0}
 .vc-head-title{font-size:15px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vc-head-sub{font-size:12px;color:rgba(255,255,255,.72);display:flex;align-items:center;gap:6px}
@@ -493,7 +493,7 @@ main li::marker{color:var(--navy-500);font-weight:600}
 .vc-msg--bot{align-self:flex-start;max-width:92%;flex-direction:row;align-items:flex-start;gap:8px}
 .vc-msg--bot.no-avatar{padding-left:36px}
 .vc-avatar{width:28px;height:28px;border-radius:50%;background:var(--bg-gray-2);border:1px solid var(--border);display:grid;place-items:center;flex:0 0 auto;margin-top:2px}
-.vc-avatar svg{width:17px;height:17px}
+.vc-avatar img{display:block;width:20px;height:20px;object-fit:contain}
 .vc-botwrap{min-width:0;flex:1}
 .vc-msg--bot .vc-bubble{
   background:var(--bg-gray-2);border:1px solid var(--border);
@@ -1700,9 +1700,7 @@ main a:visited{color:#c72127}
     <!-- header -->
     <div class="vc-head">
       <div class="vc-head-avatar" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#2E548A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 8V4.5M9 13h.01M15 13h.01M9.5 16.2h5"/><circle cx="12" cy="3.6" r="1.3" fill="#2E548A"/>
-        </svg>
+        <img src="ui/wp-content/themes/assets/images/mascot.svg" alt="">
       </div>
       <div class="vc-head-txt">
         <div class="vc-head-title" id="vcTitle">VinUni AI Assistant</div>
@@ -1734,9 +1732,6 @@ main a:visited{color:#c72127}
     <div class="vc-thread" id="vcThread" role="log"></div>
     <button class="vc-float" id="vcNewMsg" type="button" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg> Tin nhắn mới
-    </button>
-    <button class="vc-float" id="vcStop" type="button" hidden>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="#fff" stroke="none"/></svg> Dừng tạo
     </button>
 
     <!-- suggest -->
@@ -2282,7 +2277,6 @@ const badge    = $('#vcBadge');
 const suggest  = $('#vcSuggest');
 const input    = $('#vcInput');
 const sendBtn  = $('#vcSend');
-const stopBtn  = $('#vcStop');
 const newMsgBtn= $('#vcNewMsg');
 const countEl  = $('#vcCount');
 const toastEl  = $('#vcToast');
@@ -2322,7 +2316,7 @@ function addUserMsg(text, ts){
   return wrap;
 }
 
-const AV_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#2E548A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 8V4.5M9 13h.01M15 13h.01M9.5 16.2h5"/><circle cx="12" cy="3.6" r="1.3" fill="#2E548A"/></svg>';
+const AV_MASCOT = '<img src="ui/wp-content/themes/assets/images/mascot.svg" alt="">';
 
 function mediaHtml(media){
   if(!media || !media.length) return '';
@@ -2407,7 +2401,7 @@ function addBotMsg(md, opts){
   wrap.dataset.intent = opts.intent || '';
   wrap.dataset.question = opts.question || '';
   wrap.innerHTML =
-    (sameCluster ? '' : '<div class="vc-avatar" aria-hidden="true">'+AV_SVG+'</div>') +
+    (sameCluster ? '' : '<div class="vc-avatar" aria-hidden="true">'+AV_MASCOT+'</div>') +
     '<div class="vc-botwrap"><div class="vc-bubble">'+
       mediaHtml(opts.media)+
       '<div class="vc-rich"></div>'+
@@ -2468,7 +2462,6 @@ function addBotMsg(md, opts){
 }
 
 function setStreamingUI(on){
-  stopBtn.hidden = !on;
   suggest.hidden = on;
   sendBtn.classList.toggle('stop', on);
   sendBtn.disabled = on ? false : !input.value.trim();
@@ -2491,12 +2484,10 @@ function stopStreaming(){
     streaming.stop();
   }
 }
-stopBtn.addEventListener('click', stopStreaming);
-
 function showTyping(){
   const t = document.createElement('div');
   t.className = 'vc-typing'; t.id = 'vcTyping';
-  t.innerHTML = '<div class="vc-avatar" aria-hidden="true">'+AV_SVG+'</div><div class="vc-bubble"><span></span><span></span><span></span></div>';
+  t.innerHTML = '<div class="vc-avatar" aria-hidden="true">'+AV_MASCOT+'</div><div class="vc-bubble"><span></span><span></span><span></span></div>';
   thread.appendChild(t); scrollBottom();
 }
 function hideTyping(){ const t = $('#vcTyping'); if(t) t.remove(); }
