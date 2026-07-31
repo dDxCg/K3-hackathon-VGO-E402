@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -25,10 +26,48 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.chatbot.admission_agent import build_admission_agent  # noqa: E402
 
 
-def check_case(checks: dict, answer: str, tools: list[str], steps: int, stopped_early: bool) -> list[str]:
-    """Trả về danh sách lý do trượt; rỗng nghĩa là đạt."""
+_QUOTED = re.compile(r'"([^"]{8,})"')
+
+
+def strip_question_echo(haystack: str, question: str) -> str:
+    """Gỡ phần câu hỏi bị chép lại khỏi vùng quét `answer_none`.
+
+    `contact_support` trả `suggested_question` = câu hỏi người dùng, và model thường
+    đặt nó trong ngoặc kép ("Bạn có thể soạn câu hỏi: …"). Với câu hỏi ghép, model chỉ
+    chép PHẦN ngoài phạm vi — nên phải gỡ cả đoạn trích dẫn nào là con của câu hỏi,
+    không chỉ nguyên văn cả câu.
+
+    Chỉ gỡ đoạn nằm trong ngoặc kép và thật sự là con của câu hỏi ⇒ lời khẳng định
+    do agent tự viết vẫn nằm nguyên trong vùng quét.
+    """
+    q = question.casefold().strip()
+    out = haystack.replace(q, " ")
+    for quoted in _QUOTED.findall(out):
+        if quoted.strip().rstrip("?.! ") in q:
+            out = out.replace(quoted, " ")
+    return out
+
+
+def check_case(
+    checks: dict,
+    answer: str,
+    tools: list[str],
+    steps: int,
+    stopped_early: bool,
+    question: str = "",
+) -> list[str]:
+    """Trả về danh sách lý do trượt; rỗng nghĩa là đạt.
+
+    `question` bị gỡ khỏi vùng quét `answer_none`: `contact_support` trả
+    `suggested_question` = nguyên văn câu hỏi người dùng, nên mọi chuỗi cấm lấy từ
+    câu hỏi đều dính oan. Đo được ở lần chạy 45 case: S06/M05/A01/A03 bị chấm trượt
+    trong khi agent làm hoàn toàn đúng. Bỏ câu hỏi đi thì lời khẳng định thật của
+    agent vẫn nằm nguyên trong vùng quét.
+    """
     failures: list[str] = []
     haystack = answer.casefold()
+    if question:
+        haystack = strip_question_echo(haystack, question)
 
     for tool in checks.get("tools_all", []):
         if tool not in tools:
@@ -64,8 +103,26 @@ def check_case(checks: dict, answer: str, tools: list[str], steps: int, stopped_
     return failures
 
 
-def run_case(case: dict, max_steps: int) -> dict:
-    agent = build_admission_agent(max_steps=max_steps)
+def classify(expect: str, passed: bool) -> str:
+    """Đối chiếu kết quả với trạng thái đã biết.
+
+    `expect="unknown"` là case mới chưa từng chạy — không có gì để so, nên gắn
+    `baseline` thay vì bịa ra regression/improvement. Sau full run đầu tiên phải
+    ghi kết quả thật vào `expect` để lần sau bắt được regression.
+    """
+    if expect not in ("pass", "fail"):
+        return "baseline"
+    if passed == (expect == "pass"):
+        return "as_expected"
+    return "improvement" if passed else "regression"
+
+
+def run_case(case: dict, max_steps: int, agent=None) -> dict:
+    # Agent dựng sẵn và dùng lại: mỗi lần dựng là một lần nạp model E5 (~49 s đo được),
+    # dựng lại từng case thì 45 case tốn ~37 phút chỉ để nạp lặp.
+    # Lịch sử hội thoại phải reset giữa các case, nếu không case sau thấy case trước.
+    agent = agent or build_admission_agent(max_steps=max_steps)
+    agent.bot.history.clear()
     started = time.perf_counter()
     try:
         result = agent.run(case["question"])
@@ -87,13 +144,10 @@ def run_case(case: dict, max_steps: int) -> dict:
         tools,
         len(result.steps),
         result.stopped_early,
+        case["question"],
     )
     passed = not failures
-    expect_pass = case["expect"] == "pass"
-    if passed == expect_pass:
-        status = "as_expected"
-    else:
-        status = "improvement" if passed else "regression"
+    status = classify(case["expect"], passed)
 
     return {
         **{k: case[k] for k in ("id", "type", "category", "question", "expect")},
@@ -106,6 +160,17 @@ def run_case(case: dict, max_steps: int) -> dict:
         "stopped_early": result.stopped_early,
         "best_score": round(result.retrieved[0].score, 4) if result.retrieved else None,
         "retrieved_sources": [c.metadata.get("source_type") for c in result.retrieved],
+        # Text chunk, không chỉ source_type: eval/judge.py cần nội dung thật để chấm
+        # faithfulness. Không có nó thì chỉ chấm được trên gold context, tức đo nhầm thứ.
+        "retrieved_contexts": [c.text for c in result.retrieved],
+        # Observation của tool là NGUỒN DỮ KIỆN THỨ HAI của agent, ngang hàng chunk RAG.
+        # Thiếu nó thì judge chấm hotline/email do contact_support trả về là "bịa" —
+        # đo được ở lần chạy 2 case đầu tiên: N02 tụt còn faithfulness 0.40 vì lý do này.
+        "tool_observations": [
+            f"[{step.action}] {step.observation}"
+            for step in result.steps
+            if step.action and step.observation and step.observation != "<final>"
+        ],
         "answer": result.answer,
         "seconds": round(elapsed, 2),
     }
@@ -129,16 +194,24 @@ def main() -> None:
     if args.type:
         cases = [c for c in cases if c["type"] == args.type]
 
+    print("Đang dựng agent (nạp model embedding local, ~50 s lần đầu)…", flush=True)
+    agent = build_admission_agent(max_steps=args.max_steps)
+
     results = []
     for index, case in enumerate(cases, 1):
         print(f"[{index}/{len(cases)}] {case['id']} … ", end="", flush=True)
-        record = run_case(case, args.max_steps)
+        record = run_case(case, args.max_steps, agent=agent)
         results.append(record)
         mark = "PASS" if record["passed"] else "FAIL"
         print(f"{mark} ({record['status']}, {record['seconds']}s)")
         if record["failures"]:
             for reason in record["failures"]:
                 print(f"        - {reason}")
+        # Checkpoint sau mỗi case: một timeout giữa chừng không làm mất cả run.
+        args.out.write_text(
+            json.dumps({"partial": True, "results": results}, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
     passed = sum(r["passed"] for r in results)
     by_status: dict[str, int] = {}
