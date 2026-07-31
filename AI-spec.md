@@ -79,8 +79,8 @@ golden set.
 |---|---|---|
 | Phương pháp mining kiểm lại được | **CÓ BẢN NHÁP** | Hoàn tất lấy ≥20 câu gần nhất; ghi thời điểm lấy mẫu và kết quả đếm cuối |
 | ≥5 ví dụ/quote nguyên văn + nguồn | **CÓ 6 CÂU, THIẾU METADATA** | Điền URL/timestamp hoặc ID truy vết cho từng câu; câu mô phỏng M01–M05 không được tính |
-| Độ trễ từ câu hỏi đến phản hồi đầu | **CHƯA ĐO** | Đọc timestamp bài/comment; báo median, p90 và n |
-| Evidence chuẩn A | **CHƯA CÓ** | Chỉ ghi nhận nếu có ≥20 người ngoài nhóm, ≥50% xác nhận và log đủ từng câu trả lời |
+| Độ trễ từ câu hỏi đến phản hồi đầu | **ĐÃ AUDIT — n=0 CẶP TIMESTAMP** | Median/p90 không tính được; cần URL/ID + timestamp hỏi và phản hồi đầu. Chi tiết: `eval/evidence-gap-measurement.md` |
+| Evidence chuẩn A | **ĐÃ AUDIT — 0/20 NGƯỜI, CHƯA ĐẠT** | Tỷ lệ xác nhận không tính được; cần log khảo sát thật ≥20 người ngoài nhóm. Chi tiết: `eval/evidence-gap-measurement.md` |
 
 Kết luận: con số 6/6 và sáu câu nguyên văn là **tín hiệu định hướng**, chưa đạt
 chuẩn B của rubric cho tới khi đủ ≥20 mẫu và mỗi câu có metadata truy vết. Năm
@@ -158,7 +158,7 @@ rõ chưa đủ căn cứ kèm kênh tuyển sinh chính thức.**
 
 | Nguyên tắc | Áp cụ thể trong prototype |
 |---|---|
-| G1 — Làm rõ hệ thống làm được gì | Lời chào và chip gợi ý nêu các chủ đề tuyển sinh hỗ trợ; non-goals được thực thi ở `classify_restricted()` |
+| G1 — Làm rõ hệ thống làm được gì | Lời chào và chip gợi ý nêu các chủ đề tuyển sinh hỗ trợ; `classify_restricted()` chỉ chặn câu chắc chắn không liên quan hoặc vi phạm ranh giới chính sách, còn câu mơ hồ luôn được đưa qua RAG |
 | G2 — Làm rõ nó làm tốt đến đâu | Câu trả lời có khối “Nguồn tham khảo”; khi không đủ căn cứ nói thẳng giới hạn |
 | G10 — Thu hẹp phạm vi khi nghi ngờ | Score dưới ngưỡng hoặc câu hỏi bị hạn chế đi thẳng `contact_support`, không gọi model trả lời thay |
 | G9 — Sửa dễ dàng | User có thể hỏi lại ngay, dùng câu hỏi gợi ý hoặc chỉnh câu hỏi soạn sẵn trước khi liên hệ |
@@ -336,4 +336,5 @@ thẩm mỹ.
 | 2026-07-30 | Nối `prototype.html` với `/api/chat` và `/api/reset`; router restricted trước LLM, source gắn backend | `src/demo_service.py`, `src/app.py`, `tests/test_app.py`; 110 test offline pass |
 | 2026-07-30 | Tạo spec theo template và khóa quality bar 85% + hard gates | Tổng hợp artifact hiện có; đánh dấu riêng mọi bằng chứng còn thiếu |
 | 2026-07-31 | Bổ sung 6 câu nguyên văn từ evidence log và 5 câu mô phỏng từ Facebook clean; thêm case mixed-scope O04 | `local-draf/evidence-log.md`, FAQ clean §2–§7 và câu mẫu người dùng cung cấp; không tính câu mô phỏng là evidence B |
+| 2026-07-31 | Đặt UI canonical tại root `prototype.html`; giữ ảnh và mascot trong `ui/` | Đồng bộ cấu trúc repo nhóm; chỉ duy trì một file prototype |
 

@@ -71,10 +71,6 @@ def test_http_health_page_chat_and_reset():
         )
         assert actions_position < sources_position
 
-        status, alias_body, _ = _request(base, "/ui/prototype.html")
-        assert status == 200
-        assert alias_body == body
-
         status, asset_body, asset_headers = _request(
             base, "/wp-content/themes/assets/images/mascot.svg"
         )
@@ -115,9 +111,9 @@ def test_http_health_page_chat_and_reset():
 
 
 def test_ui_path_and_static_route_are_confined_to_ui_folder():
-    assert PROTOTYPE == UI_ROOT / "prototype.html"
+    assert PROTOTYPE == UI_ROOT.parent / "prototype.html"
     assert PROTOTYPE.is_file()
-    assert not (UI_ROOT.parent / "prototype.html").exists()
+    assert not (UI_ROOT / "prototype.html").exists()
 
     server = make_server(port=0, service=StubService())
     thread = threading.Thread(target=server.serve_forever, daemon=True)
