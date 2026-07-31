@@ -1,13 +1,3 @@
-"""Bọc 2 tool thật ở `src/tools/` thành `Tool` cho vòng ReAct.
-
-Khe hở phải vá ở đây: `attach_source_link()` nhận `ChunkRef` (có sẵn source_url),
-nhưng schema trong docs/design-agent-tools.md §3 hứa với model là
-`chunk_ids: list[str]`. Model chỉ biết id, nên tầng này tra ngược id -> nguồn từ
-kết quả retrieval gần nhất.
-
-Chunk đến từ RAG đổ sẵn vào system prompt (`prefetch_rag`), không qua tool.
-"""
-
 from .rag_bridge import ChromaRetriever
 from .types import Tool, ToolRegistry
 

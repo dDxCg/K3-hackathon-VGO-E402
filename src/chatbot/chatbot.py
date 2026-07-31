@@ -5,6 +5,7 @@ from typing import Any
 
 from openai import OpenAI
 
+from ..tools.contact_support import NO_GROUNDING_THRESHOLD
 from .config import Settings
 from .prompt import ToolSignature, render_system_prompt
 from .types import Chunk, NullRetriever, Retriever
@@ -18,7 +19,7 @@ class Chatbot:
         retriever: Retriever | None = None,
         context: str = "",
         top_k: int = 5,
-        grounding_threshold: float = 0.7,
+        grounding_threshold: float = NO_GROUNDING_THRESHOLD,
     ) -> None:
         self.settings = settings or Settings.from_env()
         self.tool_signatures: list[Any] = list(tool_signatures or [])

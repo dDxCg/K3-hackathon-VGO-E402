@@ -6,6 +6,8 @@ from typing import Any, Sequence
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
+from ..tools.contact_support import NO_GROUNDING_THRESHOLD
+
 PROMPT_DIR = Path(__file__).resolve().parent / "prompts"
 
 _env = Environment(
@@ -25,13 +27,22 @@ class ToolSignature:
     signature: str
 
 
+def render_policy(threshold: float, template: str = "admission_policy.md") -> str:
+    """Chính sách nghiệp vụ nằm ở `prompts/`, không hardcode trong file Python.
+
+    Sửa câu chữ chính sách là việc của người viết prompt, không nên phải mở code.
+    `threshold` đổ vào để con số trong chính sách luôn khớp ngưỡng thật đang chạy.
+    """
+    return _env.get_template(template).render(threshold=threshold).strip()
+
+
 def render_system_prompt(
     tool_signatures: Sequence[Any] | None = None,
     retrieved: Sequence[Any] | None = None,
     context: str = "",
     react: bool = False,
     max_steps: int = 6,
-    threshold: float = 0.7,
+    threshold: float = NO_GROUNDING_THRESHOLD,
     template: str = "system.j2",
 ) -> str:
     """Đổ tool signature + chunk RAG + giao thức ReAct vào system prompt.

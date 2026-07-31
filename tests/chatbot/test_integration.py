@@ -76,7 +76,39 @@ def test_grounding_theo_nguong_da_chot(rag: ChromaRetriever):
     weak = ChromaRetriever(retrieve_fn=lambda q, top_k=5: fake_payload({**WEB_RESULT, "cosine_similarity": 0.4}))
     weak.retrieve("x")
     assert weak.has_grounding() is False
-    assert NO_GROUNDING_THRESHOLD == 0.7
+
+
+def test_moi_tang_dung_chung_mot_nguong():
+    """Ngưỡng từng nằm ở ba chỗ độc lập và đã lệch nhau thật (rag_bridge 0.85 vs
+    contact_support 0.7): prompt báo 'không đủ căn cứ' trong khi guard nói ngược lại.
+    Test này chốt chúng phải là cùng một giá trị."""
+    import inspect
+
+    from src.chatbot import chatbot as chatbot_module
+    from src.chatbot import prompt as prompt_module
+    from src.tools.contact_support import NO_GROUNDING_THRESHOLD as tool_threshold
+
+    assert NO_GROUNDING_THRESHOLD == tool_threshold
+    assert inspect.signature(prompt_module.render_system_prompt).parameters[
+        "threshold"
+    ].default == tool_threshold
+    assert inspect.signature(chatbot_module.Chatbot.__init__).parameters[
+        "grounding_threshold"
+    ].default == tool_threshold
+
+
+@pytest.mark.parametrize(
+    "score, grounded",
+    [(0.849, False), (0.85, True), (0.851, True)],
+)
+def test_bien_nguong_chinh_xac(score: float, grounded: bool):
+    """Biên `>=`: đổi thành `>` thì case 0.85 phải đỏ. Test cũ dùng 0.85 vs 0.4,
+    cách biên quá xa nên không bắt được lỗi lệch dấu."""
+    rag = ChromaRetriever(
+        retrieve_fn=lambda q, top_k=5: fake_payload({**WEB_RESULT, "cosine_similarity": score})
+    )
+    rag.retrieve("x")
+    assert rag.has_grounding() is grounded
 
 
 def test_chunk_by_id_tich_luy_qua_nhieu_luot(rag: ChromaRetriever):
