@@ -44,8 +44,8 @@ Nguồn sơ bộ: [brief đề tài](docs/brief-de-tai.md) và bộ
 |---|---|---|
 | Phương pháp mining kiểm lại được       | **CÓ BẢN NHÁP**              | Hoàn tất lấy ≥20 câu gần nhất; ghi thời điểm lấy mẫu và kết quả đếm cuối            |
 | ≥5 ví dụ/quote nguyên văn + nguồn        | **CÓ 6 CÂU, THIẾU METADATA** | Điền URL/timestamp hoặc ID truy vết cho từng câu; câu mô phỏng M01–M05 không được tính |
-| Độ trễ từ câu hỏi đến phản hồi đầu | **CHƯA ĐO**                   | Đọc timestamp bài/comment; báo median, p90 và n                                                  |
-| Evidence chuẩn A                              | **CHƯA CÓ**                   | Chỉ ghi nhận nếu có ≥20 người ngoài nhóm, ≥50% xác nhận và log đủ từng câu trả lời |
+| Độ trễ từ câu hỏi đến phản hồi đầu | **ĐÃ AUDIT — n=0 CẶP TIMESTAMP** | Median/p90 không tính được; cần URL/ID + timestamp hỏi và phản hồi đầu. Chi tiết: `eval/evidence-gap-measurement.md` |
+| Evidence chuẩn A | **ĐÃ AUDIT — 0/20 NGƯỜI, CHƯA ĐẠT** | Tỷ lệ xác nhận không tính được; cần log khảo sát thật ≥20 người ngoài nhóm. Chi tiết: `eval/evidence-gap-measurement.md` |
 
 Kết luận: con số 6/6 và sáu câu nguyên văn là **tín hiệu định hướng**, chưa đạt
 chuẩn B của rubric cho tới khi đủ ≥20 mẫu và mỗi câu có metadata truy vết. Năm
