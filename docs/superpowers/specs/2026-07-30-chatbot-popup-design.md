@@ -2,11 +2,11 @@
 
 ## Mục tiêu
 
-Cập nhật widget chatbot trong `ui/prototype.html` để lời mời chat xuất hiện đúng một lần theo luồng rõ ràng, không lưu hội thoại vào trình duyệt, cải thiện khả năng đọc câu trả lời dài và làm mascot nổi bật hơn.
+Cập nhật widget chatbot trong `prototype.html` để lời mời chat xuất hiện đúng một lần theo luồng rõ ràng, không lưu hội thoại vào trình duyệt, cải thiện khả năng đọc câu trả lời dài và làm mascot nổi bật hơn.
 
 ## Phạm vi
 
-- Chỉ sửa widget chatbot trong `ui/prototype.html`.
+- Chỉ sửa widget chatbot trong `prototype.html`.
 - Không thay đổi nội dung trang, cơ sở tri thức hay logic trả lời hiện có.
 - Hội thoại chỉ tồn tại trong bộ nhớ của trang đang mở. Tải lại hoặc đóng trang sẽ bắt đầu một phiên mới.
 

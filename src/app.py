@@ -1,4 +1,4 @@
-"""HTTP server tối giản phục vụ UI trong ``ui/`` và API chat thật."""
+"""HTTP server phục vụ ``prototype.html`` ở root, asset trong ``ui/`` và API chat."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from src.rag.embedding import warmup_local_model
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 UI_ROOT = PROJECT_ROOT / "ui"
-PROTOTYPE = UI_ROOT / "prototype.html"
+PROTOTYPE = PROJECT_ROOT / "prototype.html"
 MAX_BODY_BYTES = 64 * 1024
 CONTENT_TYPES = {
     ".webp": "image/webp",
@@ -57,14 +57,14 @@ class DemoHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         path = unquote(urlparse(self.path).path)
-        if path in {"/", "/prototype.html", "/ui/prototype.html"}:
+        if path in {"/", "/prototype.html"}:
             self._file(PROTOTYPE)
             return
         if path == "/api/health":
             self._json(HTTPStatus.OK, {"status": "ok"})
             return
-        # Hỗ trợ cả asset từ URL gốc (`/wp-content/...`) và khi mở alias
-        # `/ui/prototype.html` (`/ui/wp-content/...`).
+        # Prototype ở root trỏ asset bằng `ui/wp-content/...`; vẫn hỗ trợ URL
+        # `/wp-content/...` để tương thích với các bản prototype trước.
         static_path = path.removeprefix("/ui/") if path.startswith("/ui/") else path.lstrip("/")
         candidate = (UI_ROOT / static_path).resolve()
         try:

@@ -2,7 +2,7 @@
 
 ## Mục tiêu
 
-Cập nhật `ui/prototype.html` để mascot không che nội dung, panel chatbot gọn hơn, footer bỏ sọc chéo và dùng ảnh nền đã crop, đồng thời dịch nhóm điều hướng desktop sang phải. Giữ nguyên nội dung và hành vi hội thoại hiện có.
+Cập nhật `prototype.html` để mascot không che nội dung, panel chatbot gọn hơn, footer bỏ sọc chéo và dùng ảnh nền đã crop, đồng thời dịch nhóm điều hướng desktop sang phải. Giữ nguyên nội dung và hành vi hội thoại hiện có.
 
 ## Phạm vi
 
@@ -29,7 +29,7 @@ Không thay đổi dữ liệu hội thoại, nội dung footer, liên kết, so
 ## Thứ tự triển khai
 
 1. Crop asset và kiểm tra ảnh đầu ra.
-2. Chỉ sau khi asset hợp lệ mới sửa `ui/prototype.html`.
+2. Chỉ sau khi asset hợp lệ mới sửa `prototype.html`.
 3. Chỉnh mascot và panel chatbot.
 4. Chỉnh footer và điều hướng.
 5. Kiểm tra responsive, trạng thái mở/đóng và khả năng truy cập.
@@ -89,7 +89,7 @@ Không thay đổi dữ liệu hội thoại, nội dung footer, liên kết, so
 
 ## Phương án kỹ thuật
 
-Dùng một khối CSS override tập trung ở cuối stylesheet nhúng trong `ui/prototype.html`. Cách này giữ nguyên CSS gốc và JavaScript hiện tại, giảm nguy cơ ảnh hưởng các breakpoint khác. Chỉ chỉnh JavaScript nếu trạng thái `.is-open` hiện tại không đủ để biểu diễn trạng thái ẩn mascot; ưu tiên giải pháp CSS dựa trên class sẵn có.
+Dùng một khối CSS override tập trung ở cuối stylesheet nhúng trong `prototype.html`. Cách này giữ nguyên CSS gốc và JavaScript hiện tại, giảm nguy cơ ảnh hưởng các breakpoint khác. Chỉ chỉnh JavaScript nếu trạng thái `.is-open` hiện tại không đủ để biểu diễn trạng thái ẩn mascot; ưu tiên giải pháp CSS dựa trên class sẵn có.
 
 ## Kiểm tra chấp nhận
 

@@ -98,7 +98,7 @@ rõ chưa đủ căn cứ kèm kênh tuyển sinh chính thức.**
 ### Mức prototype và phần thật/mock
 
 - Mức: [ ] Sketch · [ ] Mock · [x] **Working prototype**.
-- **Thật:** `ui/prototype.html` gọi `POST /api/chat`; `src/app.py` phục vụ UI/API;
+- **Thật:** `prototype.html` gọi `POST /api/chat`; `src/app.py` phục vụ UI/API;
   RAG có 82 chunk; document/query embedding dùng duy nhất local
   `intfloat/multilingual-e5-large`; Chroma cosine retrieval; model chat thật
   qua endpoint tương thích OpenAI; router ngoài phạm vi; tool gắn nguồn và
@@ -294,8 +294,8 @@ thẩm mỹ.
 | 2026-07-30 | Chốt 2 tool `contact_support` và `attach_source_link` | `docs/design-agent-tools.md`: không căn cứ/ngoài thẩm quyền phải chuyển người; nguồn lấy từ metadata |
 | 2026-07-30 | Ghi nhận E2E 5/9, không che 4 case fail | `docs/chatbot-e2e-report.md`: D1–D3 và ngưỡng 0,7 chưa hiệu chỉnh |
 | 2026-07-30 | Chuẩn hóa RAG chỉ dùng local multilingual-e5-large | `docs/rag-system.md`, `eval/results/embedding-benchmark.md`: 82/82 record, 10/10 retrieval |
-| 2026-07-30 | Nối `ui/prototype.html` với `/api/chat` và `/api/reset`; router restricted trước LLM, source gắn backend | `src/demo_service.py`, `src/app.py`, `tests/test_app.py`; 110 test offline pass |
-| 2026-07-31 | Chuyển UI canonical vào `ui/prototype.html`, xóa bản root và thêm static route giới hạn trong `ui/` | Đồng bộ cấu trúc repo mới sau pull; tránh hai prototype lệch nhau |
+| 2026-07-30 | Nối `prototype.html` với `/api/chat` và `/api/reset`; router restricted trước LLM, source gắn backend | `src/demo_service.py`, `src/app.py`, `tests/test_app.py`; 110 test offline pass |
+| 2026-07-31 | Đặt UI canonical tại root `prototype.html`; giữ ảnh và mascot trong `ui/` | Đồng bộ cấu trúc repo nhóm; chỉ duy trì một file prototype |
 | 2026-07-30 | Tạo spec theo template và khóa quality bar 85% + hard gates | Tổng hợp artifact hiện có; đánh dấu riêng mọi bằng chứng còn thiếu |
 | 2026-07-31 | Ưu tiên nguồn chính thức gần top, truyền cảnh báo nguồn cộng đồng ra UI; browser smoke thật 1/1 | Case “học bao lâu” ban đầu hiện Facebook dù handbook chính thức có score gần tương đương |
 | 2026-07-31 | UI chỉ hiện “Nguồn tham khảo” + URL ở cuối bubble; metadata vẫn giữ ở backend | Quyết định trực tiếp của product owner; ghi nhận hard gate nhãn cộng đồng trên UI hiện chưa đạt |

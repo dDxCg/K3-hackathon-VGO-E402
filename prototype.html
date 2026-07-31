@@ -607,6 +607,8 @@ main li::marker{color:var(--navy-500);font-weight:600}
 .vc-source-list{display:grid;gap:8px}
 .vc-source-item{padding-top:8px;border-top:1px solid var(--border)}
 .vc-source-item:first-child{padding-top:0;border-top:0}
+.vc-source-major{font-size:12.5px;font-weight:650;color:var(--text-600);line-height:1.45}
+.vc-source-minor{font-size:12px;color:var(--text-600);line-height:1.45;margin-top:2px}
 .vc-src{
   display:inline-flex;align-items:center;gap:5px;background:var(--bg-white);
   border:1px solid var(--border);border-radius:var(--r-pill);padding:4px 10px;
@@ -902,19 +904,23 @@ body{
           mask:var(--logo-src) no-repeat left center/contain;
 }
 .logo:hover .logo-mark{background:#134d8b}
-.main-nav{margin:0 6px 0 auto}
+.main-nav{position:relative;margin:0 6px 0 auto}
 .main-nav>ul{display:flex;align-items:center;gap:0;list-style:none;margin:0 -13px 0 0;padding:0}
 .main-nav>ul>li{display:block;position:relative}
 .main-nav>ul>li>a{
   display:block;position:relative;padding:27px 13px 25px;color:#134d8b;
   text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap;
 }
-.main-nav>ul>li>a::after{
-  content:"";position:absolute;left:50%;bottom:18px;width:0;height:2px;
-  background:#c72127;transform:translateX(-50%);transition:width .25s ease;
+.main-nav>ul>li>a::after{display:none}
+.main-nav>ul>li>a:hover,.main-nav>ul>li>a.active,.main-nav>ul>li>a[aria-current="page"]{color:#134d8b}
+.main-nav-underline{
+  position:absolute;z-index:1;left:0;bottom:22px;width:0;height:2px;
+  border-radius:2px;background:#c72127;opacity:0;pointer-events:none;
+  transform:translate3d(0,0,0);will-change:transform,width;
 }
-.main-nav>ul>li>a:hover,.main-nav>ul>li>a[aria-current="page"]{color:#134d8b}
-.main-nav>ul>li>a:hover::after,.main-nav>ul>li>a[aria-current="page"]::after{width:calc(100% - 26px)}
+.main-nav-underline.is-ready{
+  transition:transform .3s cubic-bezier(.25,1,.5,1),width .3s ease,opacity .16s ease;
+}
 .mobile-lang-label{display:none}
 .lang-mobile{display:none!important}
 .header-actions{display:flex;align-items:center;gap:18px;flex:0 0 auto;margin-left:13px}
@@ -951,10 +957,10 @@ body{
 .search-submit{position:absolute;right:14px;top:50%;width:24px;height:24px;transform:translateY(-50%)}
 .search-submit svg{width:24px;height:24px;fill:none;stroke:#2e2e2e;stroke-width:1.5}
 
-/* Campus banner loaded from the local UI asset bundle. */
+/* Self-contained campus banner: the archived image files are URL pointer text, not image binaries. */
 .post-banner{
   position:relative;isolation:isolate;width:100%;height:clamp(440px,48.6vw,700px);padding:0;overflow:hidden;
-  background:#315d47 url("/wp-content/themes/assets/images/vinuni_banner.webp") center/cover no-repeat;
+  background:#3d7295 url("ui/wp-content/themes/assets/images/vinuni_banner.webp") center center/cover no-repeat;
 }
 .post-banner::before{
   content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
@@ -1025,8 +1031,11 @@ main{width:100%;max-width:1140px;margin:0 auto;padding:0 15px 96px}
 .eyebrow{margin-bottom:10px;color:#134d8b;font-size:12px;letter-spacing:.09em}
 .eyebrow::before{background:#c72127}
 .hero-card__content h2{margin:0 0 12px;color:#2e2e2e;font-size:28px;line-height:1.45}
-.hero-card__aside{padding:24px;background:#134d8b}
+.hero-card__aside{padding:24px calc(24px - .4cm);background:#134d8b}
 .hero-card__aside h3{font-size:18px}
+.hero-card__aside .quick-facts li{flex-wrap:nowrap;gap:8px}
+.hero-card__aside .quick-facts span,
+.hero-card__aside .quick-facts strong{white-space:nowrap;font-size:13px}
 .content-layout{
   display:grid;grid-template-columns:minmax(0,3fr) minmax(235px,1fr);grid-template-areas:"article toc";
   gap:48px;align-items:start;
@@ -1080,9 +1089,7 @@ main a:visited{color:#c72127}
 /* Footer banner and patterned institutional footer */
 .footer-banner{
   position:relative;height:220px;overflow:hidden;
-  background:
-    linear-gradient(180deg,rgba(16,64,100,.08),rgba(7,34,63,.64)),
-    url("/wp-content/themes/assets/images/vinuni_banner.webp") center 58%/cover no-repeat;
+  background:#315d7e url("ui/wp-content/themes/assets/images/vinuni_banner.webp") center 68%/cover no-repeat;
 }
 .footer-banner::before{display:none}
 .footer-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,34,63,.16),rgba(7,34,63,.44))}
@@ -1090,11 +1097,8 @@ main a:visited{color:#c72127}
 .site-footer{
   position:relative;overflow:hidden;
   background-color:#0e3e72;
-  background-image:
-    linear-gradient(180deg,rgba(8,45,87,.74),rgba(8,45,87,.9)),
-    url("/wp-content/themes/assets/images/footer_mb_cropped.webp");
-  background-position:center,center;background-size:cover,cover;
-  background-repeat:no-repeat,no-repeat;
+  background-image:linear-gradient(rgba(7,45,87,.3),rgba(7,45,87,.3)),url("ui/wp-content/themes/assets/images/footer_mb_cropped.webp");
+  background-position:center,center bottom;background-size:cover,cover;background-repeat:no-repeat;
   color:#fff;border:0;font-size:12px;
 }
 .site-footer::before{
@@ -1128,7 +1132,7 @@ main a:visited{color:#c72127}
   .content-layout{gap:32px}
 }
 
-@media (max-width:991.98px){
+@media (max-width:1023.98px){
   body{padding-top:0;touch-action:pan-y}
   .site-header{position:sticky;background:#134d8b;box-shadow:0 3px 5px rgba(57,63,72,.3)}
   .header-top{display:none}
@@ -1147,6 +1151,7 @@ main a:visited{color:#c72127}
   .main-nav>ul>li:last-child{border-bottom:1px solid #eaeaea}
   .main-nav>ul>li>a{padding:14px 2px;color:#134d8b;font-size:16px;font-weight:500}
   .main-nav>ul>li>a::after{display:none}
+  .main-nav-underline{display:none}
   .mobile-lang-label{display:block;margin-bottom:8px;color:#818181;font-size:12px;text-transform:uppercase}
   .lang-mobile{display:flex!important;width:100%;padding:4px;gap:8px;background:#eaeaea}
   .lang-mobile button{flex:1;padding:8px 16px;border-radius:4px;color:#818181;font-size:16px;font-weight:700}
@@ -1196,7 +1201,7 @@ main a:visited{color:#c72127}
   .hero-card__content h2{font-size:22px}
   .hero-card__aside{padding:20px}
   .hero-card__aside .quick-facts li{grid-template-columns:1fr auto}
-  .hero-card__aside .quick-facts strong{text-align:right}
+  .hero-card__aside .quick-facts strong{text-align:right;white-space:normal;overflow-wrap:anywhere}
   .toc ol{columns:1}
   main h2{margin-top:36px;font-size:22px}
   main h3{font-size:18px}
@@ -1236,7 +1241,7 @@ main a:visited{color:#c72127}
 }
 .vc-panel{right:16px;bottom:16px;width:340px;height:calc(460px + 1.5cm);max-height:calc(100dvh - 32px)}
 .vc-teaser{right:calc(96px + .2cm);bottom:44px;max-width:286px;font-weight:600}
-@media (min-width:992px){
+@media (min-width:1024px){
   .footer-nav{transform:translateX(1cm)}
 }
 @media (max-width:767px){
@@ -1249,6 +1254,41 @@ main a:visited{color:#c72127}
 }
 @media (prefers-reduced-motion:reduce){
   .vc-fab-mascot{animation:none}
+}
+
+/* 2026-07-31: responsive alignment corrections */
+@media (min-width:1024px){
+  .vc-teaser{right:calc(88px + .2cm);bottom:72px}
+  .footer-contact{max-width:270px;padding-right:0;transform:translateX(-16px)}
+  .footer-contact ul{max-width:260px}
+}
+@media (min-width:1600px){
+  .footer-contact{transform:translateX(-100px)}
+}
+@media (min-width:601px) and (max-width:1023.98px){
+  .vc-teaser{left:auto;right:16px;bottom:110px;width:286px;max-width:calc(100vw - 32px)}
+  .footer-contact{max-width:none;padding-right:0;transform:none}
+  .footer-contact ul{max-width:none}
+}
+@media (min-width:360px) and (max-width:600px){
+  .vc-teaser{
+    left:auto;right:calc(78px + .2cm);bottom:94px;
+    width:min(286px,calc(100vw - 104px));max-width:none;
+  }
+  .footer-contact{max-width:none;padding-right:0;transform:none}
+  .footer-contact ul{max-width:none}
+  .footer-contact a{overflow-wrap:anywhere}
+}
+.vc-fab-mascot{
+  animation:vc-mascot-sway 2.9s cubic-bezier(.45,.05,.55,.95) infinite;
+}
+@keyframes vc-mascot-sway{
+  0%,100%{transform:translateY(0) rotate(-3deg)}
+  50%{transform:translateY(-4px) rotate(3deg)}
+}
+@media (prefers-reduced-motion:reduce){
+  .vc-fab-mascot{animation:none}
+  .main-nav-underline.is-ready{transition:none}
 }
 </style>
 </head>
@@ -1285,10 +1325,11 @@ main a:visited{color:#c72127}
           <li><a href="#">Đào tạo</a></li>
           <li><a href="#">Nghiên cứu</a></li>
           <li><a href="#">Hợp tác</a></li>
-          <li><a href="#" aria-current="page">Tuyển sinh</a></li>
+          <li><a href="#" class="active" aria-current="page">Tuyển sinh</a></li>
           <li><a href="#">Đời sống sinh viên</a></li>
           <li><a href="#">Về VinUni</a></li>
         </ul>
+        <span class="main-nav-underline" aria-hidden="true"></span>
       </nav>
 
       <div class="header-actions">
@@ -1408,23 +1449,23 @@ main a:visited{color:#c72127}
   <!-- ---------- GIỚI THIỆU ---------- -->
   <h2 id="gioi-thieu">Giới thiệu chương trình</h2>
   <p>
-    Chương trình <strong>AI Thực Chiến</strong> là chương trình đặc biệt của Tập đoàn Vingroup do
+    Chương trình AI Thực Chiến là chương trình đặc biệt của Tập đoàn Vingroup do
     Trường Đại học VinUni phối hợp triển khai nhằm đào tạo nguồn nhân lực AI “làm được việc” cho xã hội
-    thông qua mô hình đào tạo tinh gọn, tốc độ trong <strong>12 tuần</strong>; cùng cơ hội việc làm với
+    thông qua mô hình đào tạo tinh gọn, tốc độ trong 12 tuần; cùng cơ hội việc làm với
     mức lương đặc biệt hấp dẫn tỷ lệ thuận với năng lực thực chiến.
   </p>
   <p>
-    Chương trình có hai mức độ: (1) <strong>Cơ bản</strong> dành cho nhân viên tác nghiệp AI và
-    (2) <strong>Nâng cao</strong> dành cho chuyên gia, kỹ sư và lãnh đạo các dự án AI trong các lĩnh vực chuyên sâu.
+    Chương trình có hai mức độ: (1) Cơ bản dành cho nhân viên tác nghiệp AI và
+    (2) Nâng cao dành cho chuyên gia, kỹ sư và lãnh đạo các dự án AI trong các lĩnh vực chuyên sâu.
   </p>
 
   <!-- ---------- HÌNH MINH HỌA ---------- -->
   <figure class="figure">
     <div class="frame">
       <img class="program-campaign-image"
-           src="/wp-content/upload-2026/622514644_1324492253057030_4972566718972446318_n-600x600.webp"
-           alt="Vingroup tuyển sinh Chương trình Đào tạo AI Thực chiến"
-           width="600" height="600" loading="lazy">
+           src="ui/wp-content/upload-2026/622514644_1324492253057030_4972566718972446318_n-600x600.webp"
+           width="600" height="600" loading="lazy" decoding="async"
+           alt="Vingroup tuyển sinh Chương trình Đào tạo AI Thực chiến">
     </div>
     <figcaption>Thông tin tuyển sinh Chương trình Đào tạo Nhân tài AI Thực chiến.</figcaption>
   </figure>
@@ -1597,7 +1638,7 @@ main a:visited{color:#c72127}
     <span class="footer-logo logo-mark" role="img" aria-label="VinUniversity"></span>
   </div>
   <div class="footer-grid">
-    <div>
+    <div class="footer-contact">
       <h4>Trường Đại học VinUni</h4>
       <ul>
         <li>Khu đô thị Vinhomes Ocean Park,<br>xã Gia Lâm, Hà Nội</li>
@@ -1641,9 +1682,7 @@ main a:visited{color:#c72127}
 <div class="vc-root">
   <button class="vc-fab is-pulsing" id="vcFab" type="button"
           aria-label="Mở trợ lý tuyển sinh" aria-expanded="false" aria-controls="vcPanel">
-    <img class="vc-fab-mascot"
-         src="/wp-content/themes/assets/images/mascot.svg"
-         alt="" aria-hidden="true" width="96" height="96">
+    <img class="vc-fab-mascot" src="ui/wp-content/themes/assets/images/mascot.svg" alt="" aria-hidden="true">
     <svg class="vc-fab-ico ico-chat" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-5.2A8 8 0 0 1 13 4a8 8 0 0 1 8 8z"/>
       <path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>
@@ -2709,6 +2748,67 @@ addEventListener('scroll', () => {
   const navBtn    = $('#navToggle');
   const searchBox = $('#headerSearch');
   const searchBtn = $('#searchBtn');
+  const navLinks  = [...nav.querySelectorAll(':scope > ul > li > a')];
+  const underline = nav.querySelector('.main-nav-underline');
+  let activeLink  = nav.querySelector('a.active') || nav.querySelector('a[aria-current="page"]');
+  let underlineFrame = 0;
+
+  function linkTextRect(link){
+    const range = document.createRange();
+    range.selectNodeContents(link);
+    return range.getBoundingClientRect();
+  }
+
+  function moveUnderline(target){
+    if(!underline || !target || innerWidth < 1024){
+      if(underline) underline.style.opacity = '0';
+      return;
+    }
+    const navRect = nav.getBoundingClientRect();
+    const targetRect = linkTextRect(target);
+    underline.style.width = targetRect.width+'px';
+    underline.style.transform = 'translate3d('+(targetRect.left-navRect.left)+'px,0,0)';
+    underline.style.opacity = '1';
+    if(!underline.classList.contains('is-ready')){
+      requestAnimationFrame(() => underline.classList.add('is-ready'));
+    }
+  }
+
+  function scheduleUnderline(target = activeLink){
+    cancelAnimationFrame(underlineFrame);
+    underlineFrame = requestAnimationFrame(() => moveUnderline(target));
+  }
+
+  navLinks.forEach(link => {
+    link.addEventListener('mouseenter', () => scheduleUnderline(link));
+    link.addEventListener('focus', () => scheduleUnderline(link));
+    link.addEventListener('click', () => {
+      navLinks.forEach(item => {
+        item.classList.remove('active');
+        item.removeAttribute('aria-current');
+      });
+      link.classList.add('active');
+      link.setAttribute('aria-current','page');
+      activeLink = link;
+      scheduleUnderline(activeLink);
+    });
+  });
+
+  nav.addEventListener('mouseleave', () => scheduleUnderline(activeLink));
+  nav.addEventListener('focusout', () => {
+    requestAnimationFrame(() => {
+      if(!nav.contains(document.activeElement)) scheduleUnderline(activeLink);
+    });
+  });
+  addEventListener('resize', () => scheduleUnderline(activeLink), {passive:true});
+  if('ResizeObserver' in window){
+    const navObserver = new ResizeObserver(() => scheduleUnderline(activeLink));
+    navObserver.observe(nav);
+  }
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(() => scheduleUnderline(activeLink));
+  }
+  scheduleUnderline(activeLink);
 
   function setNav(open){
     nav.classList.toggle('is-open', open);
@@ -2940,9 +3040,7 @@ function askClear(btn){
   btn.textContent = btn.dataset.orig;
   doClear();
 }
-async function doClear(){
-  const previousSessionId = Memory.sessionId;
-  if(pendingRequest) stopStreaming();
+function doClear(){
   Memory.turns = []; Memory.topics = []; Memory.lastIntent = null;
   Memory.profile = { name:null, email:null, phone:null, level:null };
   Memory.opened = true;
@@ -2951,16 +3049,6 @@ async function doClear(){
   thread.innerHTML = '';
   botSay(GREETING, { intent:'greeting', label:'Chào hỏi', chips:DEFAULT_CHIPS });
   toast('Đã xóa hội thoại');
-  try{
-    const response = await fetch('/api/reset', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({session_id:previousSessionId})
-    });
-    if(!response.ok) throw new Error('Reset API returned '+response.status);
-  }catch(err){
-    console.warn('Could not reset server session:', err);
-  }
 }
 $('#vcClear').addEventListener('click', e => askClear(e.currentTarget));
 

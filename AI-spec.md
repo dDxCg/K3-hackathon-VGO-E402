@@ -336,4 +336,5 @@ thẩm mỹ.
 | 2026-07-30 | Nối `prototype.html` với `/api/chat` và `/api/reset`; router restricted trước LLM, source gắn backend | `src/demo_service.py`, `src/app.py`, `tests/test_app.py`; 110 test offline pass |
 | 2026-07-30 | Tạo spec theo template và khóa quality bar 85% + hard gates | Tổng hợp artifact hiện có; đánh dấu riêng mọi bằng chứng còn thiếu |
 | 2026-07-31 | Bổ sung 6 câu nguyên văn từ evidence log và 5 câu mô phỏng từ Facebook clean; thêm case mixed-scope O04 | `local-draf/evidence-log.md`, FAQ clean §2–§7 và câu mẫu người dùng cung cấp; không tính câu mô phỏng là evidence B |
+| 2026-07-31 | Đặt UI canonical tại root `prototype.html`; giữ ảnh và mascot trong `ui/` | Đồng bộ cấu trúc repo nhóm; chỉ duy trì một file prototype |
 

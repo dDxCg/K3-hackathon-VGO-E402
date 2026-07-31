@@ -109,7 +109,7 @@ python -m compileall -q src eval
 Luồng chạy thật ngày 2026-07-31:
 
 ```text
-ui/prototype.html → POST /api/chat → E5-large local → ChromaDB
+prototype.html (root) → POST /api/chat → E5-large local → ChromaDB
 → model chat đã cấu hình → source attachment → UI
 ```
 
