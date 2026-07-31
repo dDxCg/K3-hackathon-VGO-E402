@@ -158,7 +158,7 @@ rõ chưa đủ căn cứ kèm kênh tuyển sinh chính thức.**
 
 | Nguyên tắc | Áp cụ thể trong prototype |
 |---|---|
-| G1 — Làm rõ hệ thống làm được gì | Lời chào và chip gợi ý nêu các chủ đề tuyển sinh hỗ trợ; non-goals được thực thi ở `classify_restricted()` |
+| G1 — Làm rõ hệ thống làm được gì | Lời chào và chip gợi ý nêu các chủ đề tuyển sinh hỗ trợ; `classify_restricted()` chỉ chặn câu chắc chắn không liên quan hoặc vi phạm ranh giới chính sách, còn câu mơ hồ luôn được đưa qua RAG |
 | G2 — Làm rõ nó làm tốt đến đâu | Câu trả lời có khối “Nguồn tham khảo”; khi không đủ căn cứ nói thẳng giới hạn |
 | G10 — Thu hẹp phạm vi khi nghi ngờ | Score dưới ngưỡng hoặc câu hỏi bị hạn chế đi thẳng `contact_support`, không gọi model trả lời thay |
 | G9 — Sửa dễ dàng | User có thể hỏi lại ngay, dùng câu hỏi gợi ý hoặc chỉnh câu hỏi soạn sẵn trước khi liên hệ |

@@ -26,65 +26,15 @@ DEFAULT_SUGGESTIONS = [
 # Margin nhỏ giữ nguyên nguồn cộng đồng khi nó thực sự khớp tốt hơn rõ rệt.
 OFFICIAL_SOURCE_MARGIN = 0.03
 
-# Domain gate chạy trước retrieval. E5 có thể cho cosine cao với câu hoàn toàn
-# không liên quan vì toàn bộ corpus cùng một chủ đề; similarity không phải bộ
-# phân loại phạm vi.
-PROGRAM_SCOPE_TERMS = (
-    "ai thuc chien",
-    "vinuni",
-    "vingroup",
-    "chuong trinh",
-    "khoa hoc",
-    "tuyen sinh",
-    "du tuyen",
-    "dang ky",
-    "nop ho so",
-    "ho so",
-    "dieu kien",
-    "doi tuong",
-    "hoc vien",
-    "hoc phi",
-    "hoc bong",
-    "phu cap",
-    "quyen loi",
-    "lo trinh",
-    "thoi luong",
-    "lich hoc",
-    "thoi khoa bieu",
-    "dia diem hoc",
-    "hoc o dau",
-    "hoc truc tiep",
-    "hoc online",
-    "track",
-    "noi dung hoc",
-    "giang vien",
-    "mentor",
-    "du an",
-    "thuc chien",
-    "doanh nghiep",
-    "chung chi",
-    "nghe nghiep",
-    "viec lam",
-    "bai danh gia",
-    "phong van",
-    "han nop",
-    "deadline",
-    "lien he",
-    "hotline",
-    "email tuyen sinh",
-)
-
-FOLLOW_UP_PATTERNS = (
-    r"^(con|the|vay|neu).{0,80}$",
-    r"^(bao lau|khi nao|o dau|nhu the nao|cu the|chi tiet).{0,40}$",
-    r"^(co duoc|co can|co phai|co mat|co ho tro).{0,60}$",
-)
-
+# Gate bảo thủ: chỉ chặn câu chắc chắn không liên quan. Mọi câu còn mơ hồ hoặc
+# có khả năng liên quan đều phải đi qua retrieval; RAG/LLM quyết định có đủ căn
+# cứ để trả lời hay không.
 UNRELATED_PATTERNS = (
     r"^\s*\d+(?:\s*[+\-*/x:]\s*\d+)+\s*\??$",
     r"con ga.{0,30}qua trung|qua trung.{0,30}con ga",
     r"thu do.{0,20}(phap|duc|anh|my|nhat)",
     r"thoi tiet|bong da|nau an|ke chuyen|tu vi|xem boi",
+    r"sua (dieu hoa|xe|dien|nuoc|may)|tho (dien|nuoc|sua xe)",
 )
 
 UNRELATED_REPLY = (
@@ -116,12 +66,8 @@ def _plain(value: str) -> str:
     )
 
 
-def classify_restricted(
-    question: str,
-    *,
-    has_program_context: bool = False,
-) -> str | None:
-    """Các ranh giới Phase 1 đã chốt trong brief, kiểm tra xác định trước LLM."""
+def classify_restricted(question: str) -> str | None:
+    """Chỉ chặn ranh giới chính sách và câu chắc chắn không liên quan."""
     text = _plain(question)
     personal = (
         r"(trang thai|ket qua|diem).{0,20}(ho so|cua (toi|em|minh))",
@@ -138,25 +84,7 @@ def classify_restricted(
         return "out_of_scope"
     if any(re.search(pattern, text) for pattern in UNRELATED_PATTERNS):
         return "unrelated"
-    if any(term in text for term in PROGRAM_SCOPE_TERMS):
-        return None
-    if has_program_context and any(
-        re.search(pattern, text) for pattern in FOLLOW_UP_PATTERNS
-    ):
-        return None
-    return "unrelated"
-
-
-def _has_program_context(bot: Chatbot) -> bool:
-    """Chỉ cho phép câu nối ngắn khi lượt trước thực sự thuộc chủ đề chương trình."""
-
-    history = getattr(bot, "history", [])
-    for message in reversed(history[-6:]):
-        if not isinstance(message, dict) or message.get("role") != "user":
-            continue
-        text = _plain(str(message.get("content", "")))
-        return any(term in text for term in PROGRAM_SCOPE_TERMS)
-    return False
+    return None
 
 
 def _contact_markdown(reason: str, question: str) -> str:
@@ -289,10 +217,7 @@ class DemoService:
 
         bot, lock = self._session(session_id)
         with lock:
-            restricted_reason = classify_restricted(
-                question,
-                has_program_context=_has_program_context(bot),
-            )
+            restricted_reason = classify_restricted(question)
             if restricted_reason:
                 if restricted_reason == "unrelated":
                     bot.remember(question, UNRELATED_REPLY)
