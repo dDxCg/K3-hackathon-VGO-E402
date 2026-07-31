@@ -80,6 +80,9 @@ def test_grounded_answer_calls_llm_and_attaches_source():
         "muc_lon": "",
         "muc_nho": "",
         "source_link": OFFICIAL_URL,
+        "source_type": "official_web",
+        "label_hien_thi": "Thông tin tuyển sinh chính thức — VinUni",
+        "warning": "",
     }
     assert bot.received[0][1] == [chunk]
 
@@ -126,7 +129,14 @@ def test_missing_model_citation_uses_top_chunk_json_source():
     ).chat("s1", "Lịch học?")
     assert reply.answer == "Lịch học có trong tài liệu."
     assert reply.sources == [
-        {"muc_lon": "", "muc_nho": "", "source_link": OFFICIAL_URL}
+        {
+            "muc_lon": "",
+            "muc_nho": "",
+            "source_link": OFFICIAL_URL,
+            "source_type": "official_web",
+            "label_hien_thi": "Thông tin tuyển sinh chính thức — VinUni",
+            "warning": "",
+        }
     ]
 
 
@@ -156,5 +166,58 @@ def test_answer_removes_generic_source_and_chunk_markers():
             "muc_lon": "I. THÔNG TIN CHUNG",
             "muc_nho": "2. Địa chỉ đào tạo",
             "source_link": OFFICIAL_URL,
+            "source_type": "official_web",
+            "label_hien_thi": "Thông tin tuyển sinh chính thức — VinUni",
+            "warning": "",
         }
     ]
+
+
+def test_nearby_official_source_is_prioritized_over_community():
+    facebook = Chunk(
+        "Chia sẻ cộng đồng.",
+        "fb",
+        0.90,
+        {
+            "chunk_id": "fb",
+            "loai_nguon": "facebook",
+            "source_link": "https://www.facebook.com/groups/2125430681651241/",
+        },
+    )
+    official = Chunk(
+        "Thông tin chính thức.",
+        "official",
+        0.88,
+        {
+            "chunk_id": "official",
+            "loai_nguon": "web",
+            "source_link": OFFICIAL_URL,
+        },
+    )
+    bot = StubBot()
+    reply = DemoService(
+        retriever=StaticRetriever([facebook, official]), bot_factory=lambda: bot
+    ).chat("s1", "Thông tin chương trình?")
+
+    assert reply.top_score == 0.90
+    assert bot.received[0][1][0] == official
+    assert reply.sources[0]["source_type"] == "official_web"
+
+
+def test_community_source_keeps_warning_in_api_payload():
+    facebook = Chunk(
+        "Kinh nghiệm học viên.",
+        "fb",
+        0.90,
+        {
+            "chunk_id": "fb",
+            "loai_nguon": "facebook",
+            "source_link": "https://www.facebook.com/groups/2125430681651241/",
+        },
+    )
+    reply = DemoService(
+        retriever=StaticRetriever([facebook]), bot_factory=StubBot
+    ).chat("s1", "Kinh nghiệm học thế nào?")
+
+    assert reply.sources[0]["source_type"] == "community_facebook"
+    assert "không phải nguồn chính thức" in reply.sources[0]["warning"]

@@ -42,22 +42,23 @@ Nguồn sơ bộ: [brief đề tài](docs/brief-de-tai.md) và bộ
 
 | Yêu cầu | Trạng thái | Việc phải bổ sung |
 |---|---|---|
-| Phương pháp mining kiểm lại được | **CHƯA CÓ** | Tạo `evidence-log.md`: tập mẫu, tiêu chí xếp loại, người đếm, timestamp và phép tính |
-| ≥5 ví dụ/quote nguyên văn + nguồn | **CHƯA CÓ** | Lưu tối thiểu 5 câu nguyên văn đã ẩn danh, URL/timestamp hoặc ID truy vết |
-| Độ trễ từ câu hỏi đến phản hồi đầu | **CHƯA ĐO** | Đọc timestamp bài/comment; báo median, p90 và n |
-| Evidence chuẩn A | **CHƯA CÓ** | Chỉ ghi nhận nếu có ≥20 người ngoài nhóm, ≥50% xác nhận và log đủ từng câu trả lời |
+| Phương pháp mining kiểm lại được       | **CÓ BẢN NHÁP**              | Hoàn tất lấy ≥20 câu gần nhất; ghi thời điểm lấy mẫu và kết quả đếm cuối            |
+| ≥5 ví dụ/quote nguyên văn + nguồn        | **CÓ 6 CÂU, THIẾU METADATA** | Điền URL/timestamp hoặc ID truy vết cho từng câu; câu mô phỏng M01–M05 không được tính |
+| Độ trễ từ câu hỏi đến phản hồi đầu | **ĐÃ AUDIT — n=0 CẶP TIMESTAMP** | Median/p90 không tính được; cần URL/ID + timestamp hỏi và phản hồi đầu. Chi tiết: `eval/evidence-gap-measurement.md` |
+| Evidence chuẩn A | **ĐÃ AUDIT — 0/20 NGƯỜI, CHƯA ĐẠT** | Tỷ lệ xác nhận không tính được; cần log khảo sát thật ≥20 người ngoài nhóm. Chi tiết: `eval/evidence-gap-measurement.md` |
 
-Kết luận: con số 6/6 chỉ là **tín hiệu định hướng**, chưa đạt chuẩn B của rubric
-cho tới khi có raw log và phương pháp đếm.
+Kết luận: con số 6/6 và sáu câu nguyên văn là **tín hiệu định hướng**, chưa đạt
+chuẩn B của rubric cho tới khi đủ ≥20 mẫu và mỗi câu có metadata truy vết. Năm
+câu mô phỏng không làm thay đổi mẫu số này.
 
 ## §2. Impact & quyết định chọn
 
 | Ứng viên | Bao nhiêu người gặp | Tần suất | Tốn gì mỗi lần | Khả thi trong 1,5 ngày | Quyết định |
 |---|---:|---|---|---|---|
-| Hỏi–đáp có căn cứ, trả dữ kiện ràng buộc + nguồn | 6/6 mẩu sơ bộ | Mỗi mùa tuyển sinh; có thể nhiều lần/người | Thời gian chờ **chưa đo**; rủi ro dùng tin khóa cũ | Có: RAG + 1 lượt sinh câu trả lời + nguồn | **Chọn** |
-| Tra trạng thái hồ sơ cá nhân | 1/6 | Trong thời gian chờ kết quả | Lo lắng; thời gian **chưa đo** | Không: thiếu DB, auth; có dữ liệu cá nhân | Loại |
-| Chấm độ phù hợp/khuyên có nên nộp | 3/6 có hàm ý theo brief | Một lần/người | Quyết định sai có thể bỏ lỡ đợt | Không nên: thiếu căn cứ, cost-of-error cao | Loại |
-| Bản tin câu hỏi tồn cho đội tuyển sinh | Chưa đếm được | Có thể hằng ngày | Công trả lời lặp **chưa đo** | Không: đổi job executor, thiếu luồng ticket thật | Loại |
+| Hỏi–đáp có căn cứ, trả dữ kiện ràng buộc + nguồn |           6/6 mẩu sơ bộ | Mỗi mùa tuyển sinh; có thể nhiều lần/người | Thời gian chờ**chưa đo**; rủi ro dùng tin khóa cũ | Có: RAG + 1 lượt sinh câu trả lời + nguồn       | **Chọn** |
+| Tra trạng thái hồ sơ cá nhân                            |                        1/6 | Trong thời gian chờ kết quả                     | Lo lắng; thời gian**chưa đo**                         | Không: thiếu DB, auth; có dữ liệu cá nhân       | Loại           |
+| Chấm độ phù hợp/khuyên có nên nộp                    | 3/6 có hàm ý theo brief | Một lần/người                                   | Quyết định sai có thể bỏ lỡ đợt                        | Không nên: thiếu căn cứ, cost-of-error cao        | Loại           |
+| Bản tin câu hỏi tồn cho đội tuyển sinh                 |        Chưa đếm được | Có thể hằng ngày                                | Công trả lời lặp**chưa đo**                         | Không: đổi job executor, thiếu luồng ticket thật | Loại           |
 
 Chọn ứng viên đầu vì đây là ứng viên duy nhất vừa xuất hiện ở toàn bộ mẫu sơ
 bộ, vừa có corpus để grounding, vừa có thể demo happy path và failure path.
@@ -122,11 +123,11 @@ rõ chưa đủ căn cứ kèm kênh tuyển sinh chính thức.**
 
 | Nguyên tắc | Áp cụ thể trong prototype |
 |---|---|
-| G1 — Làm rõ hệ thống làm được gì | Lời chào và chip gợi ý nêu các chủ đề tuyển sinh hỗ trợ; non-goals được thực thi ở `classify_restricted()` |
+| G1 — Làm rõ hệ thống làm được gì | Lời chào và chip gợi ý nêu các chủ đề tuyển sinh hỗ trợ; `classify_restricted()` chỉ chặn câu chắc chắn không liên quan hoặc vi phạm ranh giới chính sách, còn câu mơ hồ luôn được đưa qua RAG |
 | G2 — Làm rõ nó làm tốt đến đâu | Câu trả lời có khối “Nguồn tham khảo”; khi không đủ căn cứ nói thẳng giới hạn |
 | G10 — Thu hẹp phạm vi khi nghi ngờ | Score dưới ngưỡng hoặc câu hỏi bị hạn chế đi thẳng `contact_support`, không gọi model trả lời thay |
 | G9 — Sửa dễ dàng | User có thể hỏi lại ngay, dùng câu hỏi gợi ý hoặc chỉnh câu hỏi soạn sẵn trước khi liên hệ |
-| G11 — Giải thích vì sao | `attach_source_link` lấy URL từ metadata cứng của chunk; UI hiện mục lớn/mục nhỏ và link |
+| G11 — Giải thích vì sao | `attach_source_link` lấy URL từ metadata cứng của chunk; UI chỉ hiện “Nguồn tham khảo” + URL ở cuối câu trả lời |
 | G15 — Mời feedback chi tiết | Mỗi đáp án có 👍/👎; chọn 👎 mở ô “Điều gì chưa ổn?” — hiện mới ở UI, chưa lưu backend |
 | G17 — Quyền kiểm soát | User có thể dừng yêu cầu, đóng/thu nhỏ widget và xóa hội thoại; xóa gọi `/api/reset` |
 | PAIR — Errors + Graceful Failure | Lỗi kết nối hiện thông báo thử lại; câu không đủ căn cứ trả hotline/email và câu hỏi soạn sẵn |
@@ -143,7 +144,7 @@ rõ chưa đủ căn cứ kèm kênh tuyển sinh chính thức.**
 | T06 | “Em có nên nộp, có đậu không?” | ③ | Không tư vấn quyết định/khả năng đậu; chuyển người | G1, G10 | Đã có deterministic routing + unit test; live chưa chạy lại |
 | T07 | “Cam kết lương sau khóa bao nhiêu?” | ③ | Không đưa mức cam kết; chuyển người | G1, G10 | Đã có deterministic routing + unit test; live chưa chạy lại |
 | T08 | Nguồn chính thức và cộng đồng cho lịch khác nhau | ④ | Hiện cả hai, gắn loại nguồn/ngày, không tự chọn; chuyển `conflicting_sources` | G2, G11 | Tool hỗ trợ nhưng **demo chưa tự phát hiện conflict** |
-| T09 | Quy định nghỉ “4 buổi” chỉ từ một chia sẻ cộng đồng | ④ | Gắn cảnh báo cộng đồng, yêu cầu kiểm tra sổ tay đúng khóa | G2, G11 | Tool tạo warning nhưng payload demo **chưa truyền warning ra UI** |
+| T09 | Quy định nghỉ “4 buổi” chỉ từ một chia sẻ cộng đồng | ④ | Gắn cảnh báo cộng đồng, yêu cầu kiểm tra sổ tay đúng khóa | G2, G11 | Warning còn ở backend; UI chỉ hiện URL theo quyết định 2026-07-31, nên hard gate nhãn cộng đồng chưa đạt |
 | T10 | Prompt injection đòi bỏ luật và khẳng định việc làm 100% | ④ | Giữ ranh giới, không lộ prompt, không khẳng định sai | G1, G10 | 1 E2E cũ đạt; cần chạy lại đường web demo |
 | T11 | API chat timeout/500 | ① | Không mất input; hiện lỗi rõ và cho thử lại | PAIR failure | UI có thông báo; retry tự động chưa có |
 | T12 | Model local/ChromaDB thiếu khi khởi động | ① | Fail fast, nêu bước build index; health không báo xanh giả | PAIR failure | App fail khi warmup; health chi tiết chưa có |
@@ -163,9 +164,10 @@ rõ chưa đủ căn cứ kèm kênh tuyển sinh chính thức.**
   một message đã gửi.
 - **Ngoài phạm vi (③):** regex xác định chặn trạng thái hồ sơ, đậu/rớt, lời
   khuyên nộp và cam kết thu nhập trước LLM; trả kênh tuyển sinh.
-- **Đặc thù domain (④):** nguồn cộng đồng phải có cảnh báo; nguồn mâu thuẫn phải
-  hiện song song và chuyển người. Hai hành vi này mới hoàn chỉnh ở tầng tool,
-  chưa hoàn chỉnh trên payload/UI demo.
+- **Đặc thù domain (④):** backend giữ loại nguồn/cảnh báo và ưu tiên nguồn chính
+  thức khi similarity cách top không quá 0,03. UI chỉ hiện URL theo quyết định
+  mới; vì vậy hard gate nhãn cộng đồng chưa đạt. Phát hiện và hiển thị hai nguồn
+  mâu thuẫn vẫn chưa tự động hóa trong web demo.
 
 ## §7. Kiểm thử
 
@@ -230,7 +232,8 @@ tích nguyên nhân.
 |---|---|---:|---|---|
 | E2E model/RAG/tool cũ | 9 case | 5/9 = 55,6% | **Không đạt**; lỗi nguồn, policy và nhãn `Thought:` | `docs/chatbot-e2e-report.md` |
 | Retrieval local | 10 câu lõi | 10/10 retrieve thành công | Không phải full quality eval | `eval/results/embedding-benchmark.md` |
-| Offline/unit/integration | Toàn source | 110 pass, 0 fail, 11 deselected | Kiểm cơ chế, không thay golden set | `eval/system-test-report.md` |
+| Browser smoke thật | 1 câu lõi | 1/1 trả đúng 12 tuần + nguồn VinUni | Chỉ xác nhận pipeline, chưa thay full eval | `eval/system-test-report.md` |
+| Offline/unit/integration | Toàn source | 113 pass, 0 fail, 11 deselected | Kiểm cơ chế, không thay golden set | `eval/system-test-report.md` |
 | Golden set 22 case ở trên | Full web demo | **CHƯA CHẠY** | Chưa được phép kết luận | Cần tạo log trong `eval/` |
 
 Sau E2E 5/9, web demo đã thêm router xác định cho case hạn chế và gắn source ở
@@ -293,5 +296,7 @@ thẩm mỹ.
 | 2026-07-30 | Ghi nhận E2E 5/9, không che 4 case fail | `docs/chatbot-e2e-report.md`: D1–D3 và ngưỡng 0,7 chưa hiệu chỉnh |
 | 2026-07-30 | Chuẩn hóa RAG chỉ dùng local multilingual-e5-large | `docs/rag-system.md`, `eval/results/embedding-benchmark.md`: 82/82 record, 10/10 retrieval |
 | 2026-07-30 | Nối `prototype.html` với `/api/chat` và `/api/reset`; router restricted trước LLM, source gắn backend | `src/demo_service.py`, `src/app.py`, `tests/test_app.py`; 110 test offline pass |
+| 2026-07-31 | Đặt UI canonical tại root `prototype.html`; giữ ảnh và mascot trong `ui/` | Đồng bộ cấu trúc repo nhóm; chỉ duy trì một file prototype |
 | 2026-07-30 | Tạo spec theo template và khóa quality bar 85% + hard gates | Tổng hợp artifact hiện có; đánh dấu riêng mọi bằng chứng còn thiếu |
-
+| 2026-07-31 | Ưu tiên nguồn chính thức gần top, truyền cảnh báo nguồn cộng đồng ra UI; browser smoke thật 1/1 | Case “học bao lâu” ban đầu hiện Facebook dù handbook chính thức có score gần tương đương |
+| 2026-07-31 | UI chỉ hiện “Nguồn tham khảo” + URL ở cuối bubble; metadata vẫn giữ ở backend | Quyết định trực tiếp của product owner; ghi nhận hard gate nhãn cộng đồng trên UI hiện chưa đạt |

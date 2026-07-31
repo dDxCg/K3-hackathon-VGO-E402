@@ -10,6 +10,7 @@ Cập nhật `prototype.html` để mascot không che nội dung, panel chatbot 
 - Chỉnh kích thước, vị trí và chuyển động của mascot chatbot.
 - Bỏ bong bóng “Chào bạn” và giữ badge `1` cho đến lần mở chatbot đầu tiên.
 - Ẩn mascot khi panel chatbot mở.
+- Dùng cùng asset mascot cho avatar ở header và cạnh tin nhắn bot; scale nhỏ bằng `object-fit: contain` để không bị cắt.
 - Thu nhỏ panel chatbot trên desktop.
 - Thay nền và bỏ sọc chéo ở footer, giữ nguyên nội dung footer.
 - Dịch nhóm menu chính desktop sang phải `1cm`.
