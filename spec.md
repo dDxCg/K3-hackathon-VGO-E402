@@ -42,22 +42,23 @@ Nguồn sơ bộ: [brief đề tài](docs/brief-de-tai.md) và bộ
 
 | Yêu cầu | Trạng thái | Việc phải bổ sung |
 |---|---|---|
-| Phương pháp mining kiểm lại được | **CHƯA CÓ** | Tạo `evidence-log.md`: tập mẫu, tiêu chí xếp loại, người đếm, timestamp và phép tính |
-| ≥5 ví dụ/quote nguyên văn + nguồn | **CHƯA CÓ** | Lưu tối thiểu 5 câu nguyên văn đã ẩn danh, URL/timestamp hoặc ID truy vết |
-| Độ trễ từ câu hỏi đến phản hồi đầu | **CHƯA ĐO** | Đọc timestamp bài/comment; báo median, p90 và n |
-| Evidence chuẩn A | **CHƯA CÓ** | Chỉ ghi nhận nếu có ≥20 người ngoài nhóm, ≥50% xác nhận và log đủ từng câu trả lời |
+| Phương pháp mining kiểm lại được       | **CÓ BẢN NHÁP**              | Hoàn tất lấy ≥20 câu gần nhất; ghi thời điểm lấy mẫu và kết quả đếm cuối            |
+| ≥5 ví dụ/quote nguyên văn + nguồn        | **CÓ 6 CÂU, THIẾU METADATA** | Điền URL/timestamp hoặc ID truy vết cho từng câu; câu mô phỏng M01–M05 không được tính |
+| Độ trễ từ câu hỏi đến phản hồi đầu | **CHƯA ĐO**                   | Đọc timestamp bài/comment; báo median, p90 và n                                                  |
+| Evidence chuẩn A                              | **CHƯA CÓ**                   | Chỉ ghi nhận nếu có ≥20 người ngoài nhóm, ≥50% xác nhận và log đủ từng câu trả lời |
 
-Kết luận: con số 6/6 chỉ là **tín hiệu định hướng**, chưa đạt chuẩn B của rubric
-cho tới khi có raw log và phương pháp đếm.
+Kết luận: con số 6/6 và sáu câu nguyên văn là **tín hiệu định hướng**, chưa đạt
+chuẩn B của rubric cho tới khi đủ ≥20 mẫu và mỗi câu có metadata truy vết. Năm
+câu mô phỏng không làm thay đổi mẫu số này.
 
 ## §2. Impact & quyết định chọn
 
 | Ứng viên | Bao nhiêu người gặp | Tần suất | Tốn gì mỗi lần | Khả thi trong 1,5 ngày | Quyết định |
 |---|---:|---|---|---|---|
-| Hỏi–đáp có căn cứ, trả dữ kiện ràng buộc + nguồn | 6/6 mẩu sơ bộ | Mỗi mùa tuyển sinh; có thể nhiều lần/người | Thời gian chờ **chưa đo**; rủi ro dùng tin khóa cũ | Có: RAG + 1 lượt sinh câu trả lời + nguồn | **Chọn** |
-| Tra trạng thái hồ sơ cá nhân | 1/6 | Trong thời gian chờ kết quả | Lo lắng; thời gian **chưa đo** | Không: thiếu DB, auth; có dữ liệu cá nhân | Loại |
-| Chấm độ phù hợp/khuyên có nên nộp | 3/6 có hàm ý theo brief | Một lần/người | Quyết định sai có thể bỏ lỡ đợt | Không nên: thiếu căn cứ, cost-of-error cao | Loại |
-| Bản tin câu hỏi tồn cho đội tuyển sinh | Chưa đếm được | Có thể hằng ngày | Công trả lời lặp **chưa đo** | Không: đổi job executor, thiếu luồng ticket thật | Loại |
+| Hỏi–đáp có căn cứ, trả dữ kiện ràng buộc + nguồn |           6/6 mẩu sơ bộ | Mỗi mùa tuyển sinh; có thể nhiều lần/người | Thời gian chờ**chưa đo**; rủi ro dùng tin khóa cũ | Có: RAG + 1 lượt sinh câu trả lời + nguồn       | **Chọn** |
+| Tra trạng thái hồ sơ cá nhân                            |                        1/6 | Trong thời gian chờ kết quả                     | Lo lắng; thời gian**chưa đo**                         | Không: thiếu DB, auth; có dữ liệu cá nhân       | Loại           |
+| Chấm độ phù hợp/khuyên có nên nộp                    | 3/6 có hàm ý theo brief | Một lần/người                                   | Quyết định sai có thể bỏ lỡ đợt                        | Không nên: thiếu căn cứ, cost-of-error cao        | Loại           |
+| Bản tin câu hỏi tồn cho đội tuyển sinh                 |        Chưa đếm được | Có thể hằng ngày                                | Công trả lời lặp**chưa đo**                         | Không: đổi job executor, thiếu luồng ticket thật | Loại           |
 
 Chọn ứng viên đầu vì đây là ứng viên duy nhất vừa xuất hiện ở toàn bộ mẫu sơ
 bộ, vừa có corpus để grounding, vừa có thể demo happy path và failure path.
