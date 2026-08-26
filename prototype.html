@@ -3066,6 +3066,7 @@ function askClear(btn){
   doClear();
 }
 function doClear(){
+  const oldSessionId = Memory.sessionId;
   Memory.turns = []; Memory.topics = []; Memory.lastIntent = null;
   Memory.profile = { name:null, email:null, phone:null, level:null };
   Memory.opened = true;
@@ -3074,6 +3075,11 @@ function doClear(){
   thread.innerHTML = '';
   botSay(GREETING, { intent:'greeting', label:'Chào hỏi', chips:DEFAULT_CHIPS });
   toast('Đã xóa hội thoại');
+  fetch('/api/reset', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: oldSessionId })
+  }).catch(err => console.warn('[VinUni Chatbot] Reset session error:', err));
 }
 $('#vcClear').addEventListener('click', e => askClear(e.currentTarget));
 
