@@ -8,7 +8,7 @@ Dự án phát triển trợ lý AI hỗ trợ đối chiếu thông tin tuyển
 
 | Họ và tên | Mã học viên | Vai trò & Phân công trách nhiệm chính |
 | :--- | :--- | :--- |
-| **Lương Thanh Trang** | 2A202601363 | **Team Lead, PM, UI Designer**|
+| **Lương Thanh Trang** | 2A202601363 | **Team Lead, PM, UI/UX Designer**|
 | **Nguyễn Thanh Hoàn** | 2A202601201 | **RAG System Developer**|
 | **Đỗ Đức Cường** | 2A202601455 | **System Prompt & Evaluation Engineer**|
 | **Đỗ Tuấn Kiệt** | 2A202601335 | **Tools & Guardrail Engineer**|
