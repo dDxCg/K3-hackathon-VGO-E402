@@ -1,188 +1,238 @@
-# Mini Hackathon AI — Batch 03
+# Trợ Lý Tư Vấn Tuyển Sinh Có Căn Cứ (AI Admission Assistant) — Nhóm VGO-E402
 
-**SPEC → Prototype → Demo.** Đây không phải cuộc thi code — đây là cuộc thi **tư duy sản phẩm AI**.
+Dự án phát triển trợ lý AI hỗ trợ đối chiếu thông tin tuyển sinh dành cho ứng viên quan tâm đến **Chương trình Đào tạo Nhân tài AI Thực Chiến** của VinUni. Dự án thuộc **Hướng C — Làn mở (Open Lane)** trong khuôn khổ chương trình Mini Hackathon AI (Batch 03).
 
-- Thời lượng: **1,5 ngày** (một ngày build + một buổi demo)
-- Nhóm: **4-5 người** · zone tối đa 5 nhóm · thi theo lớp
+---
 
-## Thành viên
+## Thành viên & Phân công nhiệm vụ
 
-| Họ và tên | Mã sinh viên |
-|---|---|
-| Lương Thanh Trang | 2A202601363 |
-| Nguyễn Thanh Hoàn | 2A202601201 |
-| Đỗ Đức Cường | 2A202601455 |
-| Đỗ Tuấn Kiệt | 2A202601335 |
+| Họ và tên | Mã học viên | Vai trò & Phân công trách nhiệm chính |
+| :--- | :--- | :--- |
+| **Lương Thanh Trang** | 2A202601363 | **Team Lead, PM, UI Designer**|
+| **Nguyễn Thanh Hoàn** | 2A202601201 | **RAG System Developer**|
+| **Đỗ Đức Cường** | 2A202601455 | **System Prompt & Evaluation Engineer**|
+| **Đỗ Tuấn Kiệt** | 2A202601335 | **Tools & Guardrail Engineer**|
 
-## Bắt đầu từ đâu?
+---
 
-1. Đọc **`01-de-bai.md`** để chọn hướng và hiểu tiêu chí.
-2. Mở **`02-guide.md`** — hướng dẫn từng giai đoạn, đứng ở đâu đọc mục đó.
-3. Viết spec theo **`03-template-ai-spec.md`** — deliverable trung tâm của cả sự kiện.
-4. Đọc **`04-rubric.md`** ngay từ đầu — biết trước bài được chấm theo tiêu chí nào.
+## Mô tả dự án & Bài toán thực tế
 
-| File / thư mục | Nội dung |
-|---|---|
-| `01-de-bai.md` | Đề bài 3 hướng · 5 tiêu chí nghiệm thu · ràng buộc chung |
-| `02-guide.md` | Hướng dẫn 5 giai đoạn: khám phá → spec → build → đo & validate → demo |
-| `03-template-ai-spec.md` | Template AI Spec (nộp 23:59 ngày 1) |
-| `04-rubric.md` | Rubric 100 điểm (25 nộp checkpoint + 75 chấm bài) + checklist xác minh 6 mốc |
-| `data/` | Dữ liệu thật đã ẩn danh: chatlog VLearn tutor + 6 transcript bài giảng bản sạch — dùng để tìm bằng chứng và xây golden set |
-| `tham-khao/` | JTBD Playbook (PDF) + worksheet JTBD đầy đủ — đọc khi muốn đào sâu |
+### 1. Pain Point (Nỗi đau của người dùng)
+Ứng viên đang cân nhắc nộp hồ sơ vào chương trình AI Thực Chiến phải đối mặt với tình trạng thông tin tuyển sinh rải rác:
+- Thông tin chính thức nằm rải rác trên website VinUni, handbook tuyển sinh dạng PDF.
+- Thông tin phi chính thức xuất hiện tràn lan trên các hội nhóm Facebook cộng đồng, thường bị cũ, sai lệch phiên bản, hoặc thiếu chính xác.
+- **Hậu quả**: Ứng viên khó đối chiếu các ràng buộc của chương trình (lịch học full-time dày đặc, địa điểm học, điều kiện nộp hồ sơ) với hoàn cảnh cá nhân, dẫn đến việc bỏ lỡ kỳ tuyển sinh hoặc chuẩn bị sai hồ sơ.
 
-## Cấu trúc repo hiện tại
+### 2. Core JTBD (Công việc cốt lõi)
+*Đối chiếu các ràng buộc tuyển sinh của đúng khóa đang tuyển với hoàn cảnh cá nhân để đưa ra quyết định có tiếp tục chuẩn bị hồ sơ hay dừng lại.*
+
+### 3. Lát cắt Trải nghiệm (One-Sentence Slice)
+> **Ứng viên chuẩn bị nộp hồ sơ** hỏi một câu hỏi ràng buộc tuyển sinh; **Hệ thống AI** tự động xác định xem câu hỏi có đủ căn cứ trong bộ dữ liệu đã được làm sạch hay không; **Người dùng** nhận được câu trả lời chính xác đính kèm nguồn trích dẫn tương ứng (hoặc chuyển sang kênh hỗ trợ chính thức nếu không đủ căn cứ/ngoài thẩm quyền).
+
+---
+
+## 💡 Giải pháp: Tự động hóa có điều kiện (Conditional Automation)
+
+Hệ thống hoạt động theo nguyên tắc cốt lõi: **Đưa dữ kiện rõ ràng, không kết luận thay**, kết hợp chốt chặn an toàn đa tầng:
 
 ```
+                  [Câu hỏi của ứng viên]
+                            │
+                            ▼
+              ┌───────────────────────────┐
+              │ Classify Restricted?      │
+              │ (Regex / Deterministic)   │
+              └─────────────┬─────────────┘
+                            │
+              ┌─────────────┴─────────────┐
+        CÓ    │                           │ KHÔNG
+   ┌──────────▼──────────┐         ┌──────▼──────┐
+   │ Chuyển hỗ trợ người │         │ Query RAG   │
+   │ (contact_support)   │         │ (ChromaDB)  │
+   └─────────────────────┘         └──────┬──────┘
+                                          │
+                           ┌──────────────┴──────────────┐
+                           │   Similarity Score >= 0.7?  │
+                           └──────────────┬──────────────┘
+                                          │
+                                   ┌──────┴──────┐
+                            KHÔNG  │             │ CÓ
+                         ┌─────────▼─────────┐ ┌─▼──────────────────┐
+                         │ Chuyển hỗ trợ     │ │ LLM tạo câu trả lời│
+                         │ (contact_support) │ │ (Grounding facts)  │
+                         └───────────────────┘ └─────────┬──────────┘
+                                                         │
+                                               ┌─────────▼──────────┐
+                                               │ Gắn link nguồn     │
+                                               │ attach_source_link │
+                                               └─────────┬──────────┘
+                                                         │
+                                                         ▼
+                                               [Hiện UI cho ứng viên]
+```
+
+### Các chốt chặn thông minh:
+1. **Deterministic Guardrail Router**: Lớp lọc tĩnh (trước LLM) sử dụng Regex để chặn và chuyển kênh ngay lập tức các yêu cầu:
+   - Tra cứu dữ liệu cá nhân nhạy cảm (Ví dụ: trạng thái hồ sơ của email/mã hồ sơ cụ thể).
+   - Yêu cầu tư vấn chủ quan (Ví dụ: "Em có nên nộp không?", "Khả năng đậu của em cao không?").
+   - Phát ngôn cam kết đầu ra/mức lương (Tránh cam kết sai chính sách).
+2. **Cơ chế No-Grounding Fallback (Ngưỡng tự tin)**: Hệ thống tính toán cosine similarity của các chunks truy xuất. Nếu điểm tương đồng cao nhất dưới `0.7`, hệ thống từ chối trả lời (tránh LLM tự bịa hoặc dùng kiến thức nền) và chuyển qua Tool 1 (`contact_support`).
+3. **Cơ chế Phân loại Nguồn (Source Classification)**:
+   - **Nguồn chính thức (Official Web/Handbook)**: Hiển thị liên kết trực tiếp kèm nhãn uy tín.
+   - **Nguồn cộng đồng (Community Facebook)**: Tự động đính kèm cảnh báo: *"Đây là chia sẻ cộng đồng, không phải nguồn chính thức. Khi khác biệt, ưu tiên thông tin chính thống từ VinUni"*.
+
+---
+
+## Kỹ thuật sử dụng & Stack công nghệ
+
+### 1. Vector Database & RAG (Retrieval-Augmented Generation)
+- **Local Embedding Model**: `intfloat/multilingual-e5-large` (1.024 chiều), toàn bộ quy trình encode văn bản và câu hỏi chạy local trên CPU/GPU để bảo mật dữ liệu tuyệt đối.
+  - Sử dụng prefix `passage:` cho tài liệu đầu vào (document) và `query:` cho câu hỏi của người dùng (query).
+- **Vector DB**: **ChromaDB** chạy ở chế độ Persistent Client, lưu trữ cục bộ tại `src/rag/chroma_db/` sử dụng khoảng cách **Cosine Similarity**.
+- **Cấu trúc Chunking**: Hệ thống phân tích cú pháp Markdown dựa trên đề mục phân cấp (Mục lớn - Mục nhỏ - Mục con) để giữ trọn vẹn ngữ cảnh. Breadcrumbs đề mục được đưa trực tiếp vào vector đầu vào của mỗi chunk.
+
+### 2. Chatbot Orchestration & Agent Tools
+- **LLM Engine**: `openai/gpt-4o-mini` (hoặc các mô hình OpenAI-compatible) cấu hình qua thư viện `openai` Python SDK.
+- **Prompt Engineering**: System Prompt động dựng qua template **Jinja2** (`system.j2`), hỗ trợ cả cấu trúc phản hồi trực tiếp lẫn giao thức suy luận **ReAct**.
+- **Agent Tools**:
+  - `attach_source_link`: Tự động đối chiếu ID chunk được LLM trích dẫn và liên kết với URL nguồn gốc từ metadata.
+  - `contact_support`: Trả về thông tin liên hệ tuyển sinh VinUni (Hotline, Email, Phụ trách tuyển sinh) cùng một **câu hỏi soạn sẵn** được tóm tắt từ câu hỏi của người dùng (HAX G9 - Sửa đổi dễ dàng).
+- **LRU Cache**: Tích hợp cache LRU lưu kết quả embedding cho câu hỏi lặp lại, tăng tốc độ phản hồi và giảm tải CPU.
+
+### 3. Web Application & Frontend
+- **Backend**: Python HTTP Server (`ThreadingHTTPServer` trong thư viện chuẩn `http.server`) phục vụ giao thức API gọn nhẹ, ổn định và nhanh chóng (`POST /api/chat`, `POST /api/reset`, `GET /api/health`).
+- **Frontend**: Giao diện chat widget hiện đại, premium (`prototype.html`) nhúng các chip câu hỏi gợi ý nhanh, tích hợp nguồn trích dẫn, khu vực nút đánh giá feedback (👍/👎), và hỗ trợ chế độ responsive trên nhiều thiết bị.
+
+---
+
+## 📁 Cấu trúc Repository
+
+```text
 VGO-K3-AI-Product-Hackathon/
-├── data/                          ← toàn bộ dữ liệu
-│   ├── vlearn-pack/               ← data pack gốc từ ban tổ chức
-│   │   ├── chatlog/               ← chatlog VLearn tutor (CSV + data dictionary)
-│   │   └── transcript/            ← 6 transcript bài giảng bản sạch
-│   ├── web/                       ← data crawl từ web
-│   │   ├── _raw/                  ← bản thô sau crawl
-│   │   └── _clean/                ← bản đã làm sạch (dùng bản này)
-│   └── Data_FaceBook_ckean/       ← feedback Facebook đã làm sạch
-├── src/
-│   ├── crawl/                     ← script crawl dữ liệu
-│   ├── chatbot/                   ← tầng chatbot / orchestration
-│   ├── rag/                       ← indexing + retrieval
-│   └── tools/                     ← tool cho agent gọi
-├── prototype.html                 ← giao diện demo chính
-├── ui/                            ← ảnh, mascot và toàn bộ asset giao diện
-├── docs/                          ← tài liệu nội bộ nhóm
-└── tham-khao/                     ← JTBD Playbook + worksheet
+├── .env.example               # File cấu hình biến môi trường mẫu
+├── pyproject.toml             # Quản lý dependency và metadata dự án (uv/pip)
+├── uv.lock                    # File lock phiên bản dependency của uv
+├── prototype.html             # Giao diện demo chính (HTML/JS/CSS thuần)
+├── demo-slides.pdf            # Slide thuyết trình 6 trang về dự án
+├── spec.md                    # Bản đặc tả kỹ thuật sản phẩm AI (AI Spec)
+├── Team.md                    # Danh sách thành viên và vai trò
+│
+├── data/                      # Thư mục chứa dữ liệu tri thức của dự án
+│   ├── web/                   # Dữ liệu cào (crawl) từ website VinUni
+│   │   ├── _raw/              # Dữ liệu thô sau khi cào
+│   │   └── _clean/            # Dữ liệu sạch định dạng Markdown (được ingest vào DB)
+│   └── Data_FaceBook_ckean/   # Dữ liệu Facebook feedback cộng đồng đã được làm sạch
+│
+├── src/                       # Mã nguồn ứng dụng
+│   ├── app.py                 # HTTP Server phục vụ giao diện và API
+│   ├── demo_service.py        # Service trung gian điều phối Router, RAG và Agent Tools
+│   ├── chatbot/               # Module chatbot & Prompting
+│   │   ├── chatbot.py         # Client gọi LLM (OpenAI SDK/OpenRouter)
+│   │   ├── config.py          # Đọc biến môi trường cấu hình model
+│   │   ├── prompt.py          # Xử lý render prompt qua Jinja2
+│   │   ├── prompts/           # Thư mục chứa template prompt
+│   │   │   └── system.j2      # Jinja2 template cho System Prompt
+│   │   ├── rag_bridge.py      # Adapter chuyển đổi kết quả từ RAG sang class Chunk
+│   │   ├── react.py           # Engine hỗ trợ giao thức ReAct (Thought-Action-Observation)
+│   │   └── types.py           # Định nghĩa các kiểu dữ liệu dùng trong module
+│   ├── rag/                   # Module RAG & Vector DB
+│   │   ├── chunking.py        # Script tiền xử lý và cắt nhỏ tài liệu Markdown
+│   │   ├── chunks.json        # File JSON chứa dữ liệu chunks trung gian sau khi cắt
+│   │   ├── download_model.py  # Script tải mô hình embedding local về máy
+│   │   ├── embedding.py       # Tạo vector embedding bằng E5 local và lưu vào ChromaDB
+│   │   └── retrieval.py       # Script truy xuất (retrieval) top-k chunks
+│   ├── tools/                 # Các công cụ (tools) của Agent
+│   │   ├── attach_source_link.py  # Tool lấy và gắn link nguồn từ metadata
+│   │   └── contact_support.py     # Tool cung cấp thông tin liên hệ và câu hỏi soạn sẵn
+│   └── crawl/                 # Script cào dữ liệu
+│       └── web_crawl.py       # Crawler dữ liệu tuyển sinh sử dụng crawl4ai
+│
+├── eval/                      # Đánh giá chất lượng & Benchmarks
+│   ├── questions.json         # Danh sách câu hỏi kiểm thử (Golden set)
+│   ├── benchmark_embedding.py # Đo thời gian nạp model và truy xuất embedding local
+│   ├── run_eval.py            # Chạy đánh giá chất lượng tự động trên Golden set
+│   └── results/               # Kết quả benchmark
+│       ├── embedding-benchmark.json
+│       └── embedding-benchmark.md
+│
+├── tests/                     # Hệ thống test tự động (Pytest)
+│   ├── chatbot/               # Unit/Integration tests cho logic chatbot offline
+│   ├── e2e/                   # Test End-to-End gọi qua model thật và RAG thật
+│   └── test_app.py            # Test tích hợp API endpoint của HTTP server
+└── ui/                        # Chứa các tài nguyên giao diện (ảnh, icon, mascot)
 ```
 
-## Chạy web demo
+---
 
-Web demo dùng `prototype.html` ở root làm giao diện; `src/app.py` phục vụ trang, asset trong `ui/` và endpoint
-`POST /api/chat`. Mỗi câu hỏi đi qua RAG thật trong `src/rag`, chatbot trong
-`src/chatbot`, rồi đính nguồn hoặc chuyển kênh tuyển sinh bằng `src/tools`.
+## 🚀 Hướng dẫn cài đặt & Khởi chạy
 
+### 1. Chuẩn bị môi trường
+Dự án yêu cầu Python phiên bản `>= 3.13`. Khuyên dùng công cụ `uv` để quản lý dependencies nhanh chóng.
+
+Cài đặt dependencies:
 ```powershell
-python -m src.app
+uv pip install -r pyproject.toml
 ```
+*(Hoặc dùng pip truyền thống: `pip install -e .`)*
 
-`prototype.html` gọi `POST /api/chat` để chat và `POST /api/reset` khi xóa hội
-thoại. Asset giao diện được đặt tập trung trong `ui/` và phục vụ cùng origin.
-
-Mở `http://127.0.0.1:8000`. Kiểm tra server:
-
-```powershell
-Invoke-RestMethod http://127.0.0.1:8000/api/health
-```
-
-Yêu cầu: `.env` có `OPENAI_API`, `OPENAI_MODEL`; model embedding local đã tải
-và ChromaDB đã có dữ liệu tại `src/rag/chroma_db`.
-
-Toàn bộ document/query embedding dùng duy nhất `intfloat/multilingual-e5-large`
-từ `models/intfloat-multilingual-e5-large`. Cấu hình local:
-
-Toàn bộ logic nằm trong một file `src/rag/embedding.py`: đọc `chunks.json`,
-thêm prefix E5, encode local và ghi vector vào ChromaDB.
-
+### 2. Cấu hình biến môi trường
+Tạo file `.env` từ `.env.example` và điền khóa API của bạn:
 ```env
+OPENAI_API=your_openrouter_or_openai_api_key
+OPENAI_MODEL=openai/gpt-4o-mini
 LOCAL_EMBEDDING_MODEL_PATH=models/intfloat-multilingual-e5-large
 LOCAL_EMBEDDING_DEVICE=cpu
 EMBEDDING_BATCH_SIZE=8
-EMBEDDING_DOCUMENT_PREFIX=passage:
-EMBEDDING_QUERY_PREFIX=query:
+CHROMA_DIR=src/rag/chroma_db
+CHROMA_COLLECTION=ai_thuc_chien_chunks
 ```
 
-Tải model lần đầu (~2,1 GB):
-
+### 3. Tải mô hình Embedding Local (E5-large)
+Tải mô hình `intfloat/multilingual-e5-large` về thư mục `models/` (dung lượng ~2.1 GB):
 ```powershell
 python -m src.rag.download_model
 ```
 
-App nạp model một lần khi khởi động. Trên CPU hiện tại, warmup khoảng 10–15 giây;
-mỗi query embedding sau đó khoảng 0,2–0,4 giây.
-
-Benchmark local với 10 câu hỏi, xuất JSON + Markdown:
-
+### 4. Build Vector Index (ChromaDB)
+Tiền xử lý và chia chunk dữ liệu:
 ```powershell
-python -m eval.benchmark_embedding
+python src/rag/chunking.py
+```
+Tạo embedding và lưu vào ChromaDB (thêm tham số `--recreate` để xóa DB cũ nếu có):
+```powershell
+python src/rag/embedding.py --recreate
 ```
 
-Kết quả nằm trong `eval/results/embedding-benchmark.json` và `.md`. Báo cáo tách
-riêng model load, embedding, Chroma query và tổng retrieval; không trộn thời gian chat LLM.
+### 5. Khởi chạy Web Server & Trải nghiệm
+Khởi động HTTP server:
+```powershell
+python -m src.app
+```
+Giao diện demo sẽ chạy tại: **`http://127.0.0.1:8000`**. Bạn có thể mở trình duyệt để trò chuyện và kiểm thử trợ lý tuyển sinh.
 
-Chạy test offline:
+---
 
+## Đánh giá & Kiểm thử
+
+### Chạy hệ thống test offline (Pytest)
+Hệ thống tích hợp hơn 110 bài test tự động cho cơ chế chatbot, tool routing, và server API:
 ```powershell
 python -m pytest -q
 ```
 
-## Lịch — 6 mốc
-
-| Mốc | Khoá 3 | Khoá 4 |
-|---|---|---|
-| Khai mạc + phát đề | 09:00 ngày 1 | 14:00 ngày 1 |
-| CP1 · Chốt Canvas | 10:00 ngày 1 | 15:00 ngày 1 |
-| CP2 · Show được thứ bấm được | 12:00 ngày 1 | 17:00 ngày 1 |
-| CP3 · AI chạy thật + đo lượt đầu | 16:00 ngày 1 | 10:30 ngày 2 |
-| CP4 · Chốt tiến độ — spec nộp hạn cứng **23:59 ngày 1** | 17:30 ngày 1 | 12:00 ngày 2 |
-| CP5 · Xác minh + validation + dry run | 09:00 ngày 2 | 14:00 ngày 2 |
-| CP6 · Demo | 10:00 ngày 2 | 15:00 ngày 2 |
-
-Mỗi mốc cần show gì và được xác minh thế nào: xem bảng trong `04-rubric.md`.
-
-## Nộp bài
-
-Một repo nhóm, cấu trúc như sau. Spec chốt lúc 23:59 ngày 1; bản hoàn chỉnh trước CP6.
-
+### Đo đạc hiệu năng Embedding & Retrieval
+Kiểm tra hiệu năng truy xuất cục bộ và sinh báo cáo markdown:
+```powershell
+python -m eval.benchmark_embedding
 ```
-repo/
-├── README.md          ← thành viên (mã HV + tên) + phân công có tên từng phần
-├── spec.md            ← AI Spec theo 03-template-ai-spec.md
-├── demo-slides.pdf    ← slide 6 trang theo 02-guide.md §5.1
-├── codebase/          ← prototype (ghi rõ phần nào mock)
-├── eval/              ← golden set + bảng kết quả các lượt chạy
-├── validation/        ← feedback log từ vòng user test
-└── reflection/        ← mỗi người 1 file
-```
+Báo cáo kết quả sẽ được ghi nhận tại `eval/results/embedding-benchmark.md`.
 
-## Chấm điểm
-
-Tổng **100 điểm = 25 điểm nộp checkpoint + 75 điểm chấm bài nộp**. Chi tiết từng ý điểm: `04-rubric.md`.
-
-**25 điểm nộp — mỗi checkpoint 5 điểm (CP1-CP5):** nộp đúng hạn → 5 điểm · nộp muộn → 0 điểm cho mốc đó. Mỗi thành viên nộp riêng, cả nhóm dùng chung một link repo.
-
-**75 điểm chấm — trên artifact trong repo, mỗi con điểm trỏ về một file:**
-
-| Khối | Điểm | Chấm trên file nào |
-|---|---|---|
-| R1 · Bằng chứng & impact | 15 | `spec.md` §1-§2 + log khảo sát/mining |
-| R2 · Lát cắt & thiết kế | 15 | `spec.md` §4 |
-| R3 · Chỗ khó & kịch bản rủi ro | 11 | `spec.md` §5-§6 |
-| R4 · Kiểm thử | 15 | `spec.md` §7 + `eval/` |
-| R5 · Prototype chạy được | 8 | `codebase/` + demo |
-| R6 · Validation với user | 8 | `validation/` |
-| R7 · Quy trình & repo | 3 | cấu trúc repo |
-
-Ba điều nên biết trước khi làm:
-
-- Điểm dựa trên **chuỗi quyết định và bằng chứng**, không dựa trên mức độ hoành tráng của sản phẩm.
-- Kết quả đo **ghi nhận trung thực** — kể cả khi không đạt mục tiêu nhóm tự đặt — vẫn được tính đủ điểm. Số liệu bị chỉnh sửa hoặc che giấu sẽ không được tính.
-- Reflection cá nhân chấm riêng theo rubric của khoá. Điểm vòng demo, chấm chéo trong zone và thưởng thêm (nếu có) theo thể lệ công bố lúc khai mạc.
-
-## Luật chung
-
-1. Prototype có 3 mức **Sketch / Mock / Working** — mức nào cũng bắt buộc **≥1 lời gọi AI chạy thật**.
-2. **Vibe-coding rule:** dùng AI để build thoải mái, nhưng không giải thích được phần có tên mình thì phần đó 0 điểm (kiểm tra tại CP5).
-3. **Quality bar** chốt tại spec.md 23:59 ngày 1 và giữ nguyên sau đó.
-4. Chỉ dùng dữ liệu trong `data/` hoặc dữ liệu giả tự sinh — không dùng dữ liệu thật của người thật. Không commit API key.
-5. Tuân thủ **quy định bảo mật dữ liệu** bên dưới — đây là điều kiện để được cấp data.
+---
 
 ## Bảo mật dữ liệu được cung cấp
 
-Dữ liệu trong `data/` là dữ liệu thật của khoá học (đã ẩn danh), cấp riêng cho hackathon này. Khi nhận data, nhóm cam kết:
-
-1. **Chỉ dùng trong phạm vi hackathon** — cho việc tìm bằng chứng, xây golden set và build prototype. Không dùng cho mục đích khác.
-2. **Không chia sẻ ra ngoài khoá học** — không đăng lên mạng xã hội, không gửi cho người ngoài, không đưa vào bất kỳ dataset hay repo công khai nào.
-3. **Không commit data pack vào repo nộp bài** — repo nhóm chỉ chứa trích dẫn ngắn để minh hoạ (vài dòng); golden set trích từ data ghi rõ mã đoạn/mã hội thoại thay vì dán nguyên văn dài.
-4. **Cẩn trọng khi đưa data vào công cụ ngoài** — chỉ đưa phần tối thiểu cần cho việc đang làm; lưu ý API/công cụ free tier có thể dùng dữ liệu để huấn luyện (xem `02-guide.md` §3.4).
-5. **Không cố suy ngược danh tính** từ dữ liệu đã ẩn danh ([học viên], mã U/C/T/M).
-6. Sau sự kiện, **xoá các bản sao data pack** khỏi máy cá nhân và các công cụ đã upload nếu ban tổ chức yêu cầu.
-
-Vi phạm được xử lý theo quy định của khoá và có thể ảnh hưởng trực tiếp đến điểm của nhóm.
+Dữ liệu được sử dụng trong thư mục `data/` là thông tin tuyển sinh và phản hồi thực tế của học viên đã được ẩn danh. Nhóm cam kết tuân thủ nghiêm ngặt các quy định bảo mật:
+1. Chỉ sử dụng dữ liệu trong phạm vi Hackathon cho mục đích huấn luyện RAG, xây dựng Golden set và demo prototype.
+2. Không chia sẻ dữ liệu ra bên ngoài, không đăng tải lên mạng xã hội hoặc các kho lưu trữ công khai.
+3. Không commit tệp tin dữ liệu thô hoặc bản ghi hội thoại gốc dài vào repo.
+4. Không cố gắng khôi phục hoặc suy ngược danh tính học viên từ dữ liệu đã ẩn danh.
